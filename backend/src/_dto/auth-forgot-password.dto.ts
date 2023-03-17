@@ -3,7 +3,7 @@ import { IsDefined, IsNotEmpty, Length } from 'class-validator';
 
 export class AuthForgotPasswordDto {
   @ApiProperty({
-    description: 'New password of the user',
+    description: 'New password of the users',
     type: String,
     minLength: 8,
     maxLength: 30,

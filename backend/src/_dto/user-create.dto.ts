@@ -3,7 +3,7 @@ import { IsDefined, IsEmail, IsNotEmpty, Length } from 'class-validator';
 
 export class UserCreateDto {
   @ApiProperty({
-    description: 'Username of the user',
+    description: 'Username of the users',
     type: String,
     minLength: 3,
     maxLength: 50,
@@ -15,7 +15,7 @@ export class UserCreateDto {
   username: string;
 
   @ApiProperty({
-    description: 'Email of the user',
+    description: 'Email of the users',
     type: String,
     example: 'example@example.com',
   })
@@ -25,7 +25,7 @@ export class UserCreateDto {
   email: string;
 
   @ApiProperty({
-    description: 'Password of the user',
+    description: 'Password of the users',
     type: String,
     minLength: 8,
     maxLength: 30,

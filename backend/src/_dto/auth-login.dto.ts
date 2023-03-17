@@ -3,7 +3,7 @@ import { IsDefined, IsEmail, IsNotEmpty, Length } from 'class-validator';
 
 export class AuthLoginDto {
   @ApiProperty({
-    description: 'Email of the user',
+    description: 'Email of the users',
     type: String,
     example: 'example@example.com',
   })
@@ -13,7 +13,7 @@ export class AuthLoginDto {
   email: string;
 
   @ApiProperty({
-    description: 'Password of the user',
+    description: 'Password of the users',
     type: String,
     minLength: 8,
     maxLength: 30,

@@ -1,8 +1,7 @@
 import { HydratedDocument, Types, now } from "mongoose";
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import {RoleEnum} from "../_enums/Role.enum";
+import { Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-export type UserDocument = HydratedDocument<Service>;
+export type ServiceDocument = HydratedDocument<Service>;
 
 @Schema(
   { timestamps: { createdAt: 'created', updatedAt: 'updated' }
@@ -11,6 +10,18 @@ export class Service
 {
   @Prop({ required: true, default: () => new Types.ObjectId() })
   _id: string;
+
+  @Prop({ required: true, default: "" })
+  name: string;
+
+  @Prop({ required: true, default: "" })
+  description: string;
+
+  @Prop({ required: true, default: "" })
+  icon: string;
+
+  @Prop({ required: true, default: "" })
+  url: string;
 
 }
 

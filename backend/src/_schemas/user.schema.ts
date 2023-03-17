@@ -1,4 +1,4 @@
-import { HydratedDocument, Types, now } from "mongoose";
+import mongoose, { HydratedDocument, Types, now } from "mongoose";
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import {RoleEnum} from "../_enums/Role.enum";
 
@@ -23,6 +23,9 @@ export class User
 
   @Prop({ enum: RoleEnum, required: true, default: RoleEnum.USER })
   role: string;
+
+  @Prop({ required: true, Type: Boolean, default: false })
+  adultContent: boolean;
 
   @Prop({ Type: Types.ObjectId, required: true })
   personalKey: string;

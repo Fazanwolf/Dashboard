@@ -1,9 +1,9 @@
-import { UsersService } from '../user/users.service';
+import { UsersService } from '../users/users.service';
 import { HttpService } from '@nestjs/axios';
-import { DiscordDto } from '../_dto/discord.dto';
 import { discord } from '../_tools/Config';
 import { lastValueFrom, map } from 'rxjs';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { RequestTokenDto } from '../_dto/request-token.dto';
 
 @Injectable()
 export class DiscordService {
@@ -21,10 +21,10 @@ export class DiscordService {
     guild: "https://discord.com/api/guilds"
   }
 
-  BASICSCOPES: string = "identify guilds email connections gdm.join guilds.join guilds.members.read";
+  BASIC_SCOPES: string = "identify guilds email connections gdm.join guilds.join guilds.members.read";
 
 
-  async getGuilds(token: string, options?: any) {
+  async getGuilds(token: string) {
     const bearerHeader = {
       Authorization: `Bearer ${token}`,
     };
@@ -61,7 +61,7 @@ export class DiscordService {
     return guilds.length;
   }
 
-  async getAuthorize(scopes: string = this.BASICSCOPES) {
+  async getAuthorize(scopes: string = this.BASIC_SCOPES) {
     const params = {
       response_type: "code",
       client_id: discord.client,
@@ -77,7 +77,7 @@ export class DiscordService {
       Authorization: `Bearer ${token}`,
     };
     const response = await this.httpService
-      .get('https://discord.com/api/users/@me', { headers: bearerHeader })
+      .get(`${this.discordURL.user}`, { headers: bearerHeader })
       .toPromise();
     if (!response.data)
       return response;
@@ -97,7 +97,7 @@ export class DiscordService {
     return response.data;
   }
 
-  async getToken(dto: DiscordDto) {
+  async getToken(dto: RequestTokenDto) {
     const formData = new FormData();
     formData.append('grant_type', 'authorization_code');
     formData.append('code', dto.code);
@@ -111,7 +111,7 @@ export class DiscordService {
     )) as any;
   }
 
-  async discordOauth2Register(dto: DiscordDto)/*: Promise<User>*/ {
+  async discordOauth2Register(dto: RequestTokenDto)/*: Promise<User>*/ {
     // const { access_token } = await this.discordTokenRequest(dto);
     // const { id, username, email } = await this.getDiscordUserInfo(access_token);
 
@@ -121,20 +121,20 @@ export class DiscordService {
     //   mail: email,
     // };
 
-    // const user: User = await this.userService.create(userDto);
+    // const users: User = await this.userService.create(userDto);
 
-    // if (user === null || user === undefined)
+    // if (users === null || users === undefined)
       // throw new ForbiddenException(
       //   '/O2/Discord/REGISTER: User already existing.',
       // );
 
     // await this.tokenService.updateToken(email, { discordToken: access_token });
 
-    // delete user.password;
-    // return user;
+    // delete users.password;
+    // return users;
   }
 
-  async discordOauth2Login(dto: DiscordDto)/*: Promise<User>*/ {
+  async discordOauth2Login(dto: RequestTokenDto)/*: Promise<User>*/ {
     const { access_token } = await this.getToken(dto);
     const { id, email } = await this.getUser(access_token);
     //
@@ -143,15 +143,15 @@ export class DiscordService {
     //   password: id,
     // };
     //
-    // const user: User = await this.userService.findUserByMail(email);
+    // const users: User = await this.userService.findUserByMail(email);
     //
-    // if (user === null || user === undefined)
+    // if (users === null || users === undefined)
     //   throw new ForbiddenException('/O2/Discord/LOGIN: USER.');
     //
-    // await this.tokenService.updateToken(user.mail.toString(), {
+    // await this.tokenService.updateToken(users.mail.toString(), {
     //   discordToken: access_token,
     // });
-    // return user;
-    // return await this.login({ mail: user.mail, password: id });
+    // return users;
+    // return await this.login({ mail: users.mail, password: id });
   }
 }

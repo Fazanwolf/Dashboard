@@ -7,8 +7,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { lastValueFrom } from 'rxjs';
-import { UsersService } from '../user/users.service';
+import { UsersService } from '../users/users.service';
 import { EmailService } from '../email/email.service';
 import { AuthRegisterDto } from '../_dto/auth-register.dto';
 import { User } from '../_schemas/user.schema';
@@ -16,8 +15,6 @@ import { AuthForgotPasswordDto } from '../_dto/auth-forgot-password.dto';
 import { AuthLoginDto } from '../_dto/auth-login.dto';
 import { AuthResetPasswordDto } from '../_dto/auth-reset-password.dto';
 import { Cache } from 'cache-manager';
-import { Auth0Dto } from '../_dto/Auth0.dto';
-import { Auth0Service } from '../auth0/auth0.service';
 
 @Injectable()
 export class AuthService {
@@ -26,8 +23,8 @@ export class AuthService {
     private jwtService: JwtService,
     private emailService: EmailService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private auth0Service: Auth0Service,
-  ) {}
+  ) {
+  }
 
   async register(registerDto: AuthRegisterDto): Promise<User> {
     const user: User = await this.userService.create(registerDto);
@@ -121,61 +118,5 @@ export class AuthService {
     return {
       status: 'logout',
     };
-  }
-
-  async loginAuth0(dto: Auth0Dto): Promise<any> {
-    const user0 = (await lastValueFrom(
-      this.auth0Service.getUser(dto.client_id),
-    )) as any;
-    const user = await this.userService.getOneByEmail(user0.email);
-    if (!user) throw new NotFoundException('User not found');
-    const isValid = await bcrypt.compare('auth0' + user0.id, user.password);
-    if (!isValid)
-      throw new UnauthorizedException('Invalid login. Please register first.');
-
-    console.log(user0);
-
-    const payload = {
-      id: user._id.toString(),
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      personalKey: user.personalKey,
-    };
-
-    return {
-      id: user._id.toString(),
-      username: user.username,
-      access_token: this.jwtService.sign(payload),
-      expiresIn: 172800,
-    };
-  }
-
-  async registerAuth0(dto: Auth0Dto): Promise<any> {
-    const user0 = (await lastValueFrom(
-      this.auth0Service.getUser(dto.client_id),
-    )) as any;
-    const checkUser = await this.userService.getOneByEmail(user0.email);
-    if (checkUser) throw new ForbiddenException('User already exists.');
-    const user = await this.userService.create({
-      username: user0.username,
-      email: user0.email,
-      password: 'auth0' + user0.id,
-    });
-
-    const payload = {
-      id: user._id.toString(),
-      email: user.email,
-      verified: 'waiting',
-      personalKey: user.personalKey,
-    };
-
-    const token = this.jwtService.sign(payload);
-    await this.emailService.sendValidationMail({
-      email: user.email,
-      token: token,
-    });
-    delete user.personalKey;
-    return user;
   }
 }

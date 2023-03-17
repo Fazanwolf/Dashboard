@@ -9,13 +9,14 @@ import { JwtService } from '@nestjs/jwt';
 import { jwt } from '../_tools/Config';
 import * as bcrypt from "bcrypt";
 import { AuthRegisterDto } from '../_dto/auth-register.dto';
+import { TokensService } from '../tokens/tokens.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private readonly tokenService: TokensService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private jwtService: JwtService,
   ) {}
 
   async manageUserCache(id: string) {
@@ -34,6 +35,7 @@ export class UsersService {
     const createdUser = new this.userModel(createUserDto);
     createdUser.personalKey = await bcrypt.genSalt(jwt.salt_round);
     createdUser.password = await this.hashPassword(createdUser.password);
+    await this.tokenService.createToken({ user: createdUser._id });
     return createdUser.save();
   }
 
@@ -57,7 +59,7 @@ export class UsersService {
 
   async update(id: string, updateUserDto: UserUpdateDto) {
     const cached: User = await this.manageUserCache(id);
-
+    
     if (updateUserDto.personalKey && updateUserDto.personalKey === 'logout')
       updateUserDto.personalKey = await bcrypt.genSalt(jwt.salt_round);
     if (updateUserDto.password) updateUserDto.password = await this.hashPassword(updateUserDto.password);
@@ -82,6 +84,7 @@ export class UsersService {
     if (cached) await this.cacheManager.del(id);
     const user: User = await this.userModel.findById(id).exec();
     if (!user) throw new NotFoundException("User not found.");
+    await this.tokenService.deleteTokenOf(id);
     return await this.userModel.findByIdAndDelete(id).exec();
   }
 

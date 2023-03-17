@@ -6,7 +6,7 @@ import {
   HttpCode,
   Param,
   Query,
-  Headers,
+  Headers, CacheKey, CacheTTL,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -35,7 +35,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Get('verifyAccount/:token')
-  @ApiOperation({ summary: 'Validate the user' })
+  @ApiOperation({ summary: 'Validate the users' })
   @ApiOkResponse({ description: 'User has been validated' })
   @ApiNotFoundResponse({ description: 'User not found' })
   validate(@Param('token') token: string) {
@@ -43,7 +43,7 @@ export class AuthController {
   }
 
   @Get('resetPassword')
-  @ApiOperation({ summary: 'Reset the password of the user' })
+  @ApiOperation({ summary: 'Reset the password of the users' })
   @ApiOkResponse({ description: 'Password changed' })
   @ApiNotFoundResponse({ description: 'User not found' })
   @ApiQuery({ name: 'token', required: true, type: String })
@@ -60,7 +60,7 @@ export class AuthController {
   }
 
   @Post('register')
-  @ApiOperation({ summary: 'Register the user' })
+  @ApiOperation({ summary: 'Register the users' })
   @ApiCreatedResponse({ description: 'User has been successfully logged' })
   @ApiBadRequestResponse({
     description:
@@ -73,10 +73,12 @@ export class AuthController {
   }
 
   @Post('login')
-  @ApiOperation({ summary: 'Login the user and retrieve the JWT token' })
+  @CacheKey("token")
+  @CacheTTL((1000*(60^2))*48)
+  @ApiOperation({ summary: 'Login the users and retrieve the JWT token' })
   @ApiOkResponse({ description: 'User has been successfully registered' })
   @ApiBadRequestResponse({
-    description: 'Missing field or email is not an email',
+    description: 'Missing field; Invalid email or password',
   })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
   login(@Body() loginDto: AuthLoginDto) {
@@ -84,11 +86,11 @@ export class AuthController {
   }
 
   @Get('logout')
-  @ApiOperation({ summary: 'Logout the user' })
+  @ApiOperation({ summary: 'Logout the users' })
   @ApiOkResponse({ description: 'User has been successfully logout' })
   @ApiBearerAuth()
   logout(@Headers() head) {
-    // return this.authService.logout(head['authorization'].split(' ')[1]);
+    return this.authService.logout(head['authorization'].split(' ')[1]);
   }
 
   // @Post('0/register')

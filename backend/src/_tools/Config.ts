@@ -31,6 +31,22 @@ const discord = {
   secret: process.env.DISCORD_CLI_SECRET,
 };
 
+const reddit = {
+  client: process.env.REDDIT_CLI_ID,
+  secret: process.env.REDDIT_CLI_SECRET,
+}
+
+const wakatime = {
+  client: process.env.WAKATIME_CLI_ID,
+  secret: process.env.WAKATIME_CLI_SECRET,
+}
+
+const papi = {
+  url: process.env.PAPI_URL,
+  host: process.env.PAPI_CLI_HOST,
+  secret: process.env.PAPI_CLI_SECRET,
+}
+
 const mailjet = {
   host: process.env.MAILJET_HOST,
   port: parseInt(process.env.MAILJET_PORT),
@@ -39,19 +55,14 @@ const mailjet = {
   email: process.env.MAILJET_EMAIL,
 };
 
-const auth0 = {
-  domain: process.env.AUTH0_DOMAIN,
-  // token:
-  client: process.env.AUTH0_CLI_ID,
-  secret: process.env.AUTH0_CLI_SECRET,
-};
-
 export {
   port as port,
   jwt as jwt,
   db as db,
   cache as cache,
   discord as discord,
+  reddit as reddit,
+  wakatime as wakatime,
+  papi as papi,
   mailjet as mailjet,
-  auth0 as auth0,
 };

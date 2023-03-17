@@ -8,8 +8,8 @@ export class MeDto {
   username: string;
 
   @ApiProperty()
-  mail: string;
+  email: string;
 
   @ApiProperty()
-  roles: string;
+  role: string;
 }

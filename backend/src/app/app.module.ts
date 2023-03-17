@@ -4,13 +4,15 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import {cache, db} from "../_tools/Config";
-import {UsersModule} from "../user/users.module";
+import {UsersModule} from "../users/users.module";
 import redisStore from 'cache-manager-redis-store';
-import {APP_INTERCEPTOR} from "@nestjs/core";
 import { AuthModule } from '../auth/auth.module';
 import { EmailModule } from '../email/email.module';
 import { ThirdpartyModule } from '../thirdparty/Thirdparty.module';
-import { HttpModule } from '@nestjs/axios';
+import { TokensModule } from '../tokens/tokens.module';
+import { ServicesModule } from '../services/services.module';
+import { WidgetsModule } from '../widgets/widgets.module';
+import { MeModule } from '../me/me.module';
 
 @Module({
   imports: [
@@ -25,7 +27,11 @@ import { HttpModule } from '@nestjs/axios';
     AuthModule,
     UsersModule,
     EmailModule,
-    ThirdpartyModule
+    ThirdpartyModule,
+    TokensModule,
+    ServicesModule,
+    WidgetsModule,
+    MeModule
   ],
   controllers: [AppController],
   providers: [AppService],

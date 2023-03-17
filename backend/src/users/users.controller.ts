@@ -25,84 +25,94 @@ import { Roles } from '../_decorators/role.decorator';
 import { RoleEnum } from '../_enums/Role.enum';
 
 @Controller('users')
+@ApiTags('Users')
 @ApiBearerAuth()
 @ApiNotFoundResponse({ description: 'User not found' })
 @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
 @ApiInternalServerErrorResponse({ description: 'Internal server error' })
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) {
+  }
 
-  @ApiTags('Users')
   @Get()
   @ApiOperation({ summary: 'Get all users' })
   @ApiOkResponse({ description: 'Users found' })
-  // @UseGuards(JwtAuthGuard)
-  // @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleEnum.ADMIN)
   async getUsers() {
     return await this.usersService.getAll();
   }
 
-  @ApiTags('Users')
   @Get(":id")
   @CacheKey("user")
   @CacheTTL(60 * 5)
   // @UseInterceptors(CacheInterceptor)
-  @ApiOperation({ summary: 'Get user by id' })
+  @ApiOperation({ summary: 'Get users by id' })
   @ApiOkResponse({ description: 'Users found' })
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleEnum.ADMIN)
   async getUser(@Param('id') id: string) {
     return await this.usersService.getOne(id);
   }
 
-  @ApiTags('Users')
   @Get("email/:email")
-  @ApiOperation({ summary: 'Get user by id' })
+  @ApiOperation({ summary: 'Get users by id' })
   @ApiOkResponse({ description: 'Users found' })
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleEnum.ADMIN)
   async getUserByEmail(@Param('email') email: string) {
     return await this.usersService.getOneByEmail(email);
   }
 
-  @ApiTags('Users')
   @Post()
   @CacheKey("user")
-  @ApiOperation({ summary: 'Create user' })
+  @ApiOperation({ summary: 'Create users' })
   @ApiCreatedResponse({ description: 'User created' })
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleEnum.ADMIN)
   async createUser(@Body() createUserDto: UserCreateDto): Promise<User> {
     return await this.usersService.create(createUserDto);
   }
 
-  @ApiTags('Users')
   @Delete(":id")
   @CacheKey("user")
-  @ApiOperation({ summary: 'Delete user' })
+  @ApiOperation({ summary: 'Delete users' })
   @ApiOkResponse({ description: 'User deleted' })
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleEnum.ADMIN)
   async deleteUser(@Param('id') id: string) {
     return await this.usersService.delete(id);
   }
 
-  @ApiTags('Users')
   @Patch(":id")
   @CacheKey("user")
   @CacheTTL(60 * 5)
-  @ApiOperation({ summary: 'Update user' })
+  @ApiOperation({ summary: 'Update users' })
   @ApiOkResponse({ description: 'User updated' })
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleEnum.ADMIN)
   async updateUser(@Param('id') id: string, @Body() updateUserDto: UserUpdateDto) {
     return await this.usersService.update(id, updateUserDto);
   }
 
+
+  @Post("createAdmin")
+  @ApiOperation({ summary: 'Create my admin account' })
+  @ApiCreatedResponse({ description: 'Admin "Fazanwolf" created' })
+  async createMyAdminAccount() {
+    const dto: UserCreateDto = {
+      email: "fazanwolf@gmail.com",
+      password: "fw974admin",
+      username: "fazanwolf",
+    }
+    const user = await this.usersService.create(dto);
+    let updateDto: UserUpdateDto = {
+      adultContent: true,
+      verified: true,
+      role: RoleEnum.ADMIN
+    }
+
+    return await this.usersService.update(user._id, updateDto);
+  }
 
 }
