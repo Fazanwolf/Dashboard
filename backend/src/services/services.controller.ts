@@ -60,6 +60,16 @@ export class ServicesController {
     return await this.servicesService.delete(id);
   }
 
+  @Delete('drop/allow')
+  @ApiOperation({ summary: 'Delete collection service' })
+  @ApiOkResponse({ description: 'Services successfully erased' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleEnum.ADMIN)
+  async dropServices() {
+    return await this.servicesService.drop();
+  }
+
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update a service' })
   @ApiOkResponse({ description: 'Service successfully updated' })

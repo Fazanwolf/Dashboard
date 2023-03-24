@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
+import { Param } from '../_schemas/widget.schema';
 
 export class WidgetCreateDto {
 
@@ -46,15 +47,14 @@ export class WidgetCreateDto {
   @ApiProperty({
     required: true,
     description: 'Params of the widget  {key: ..., value: ...}',
-    type: String,
-    example: {
+    type: [Param],
+    example: [
+      {
       key: "Age",
       value: "18",
-    },
+      },
+    ]
   })
-  params: {
-    key: string;
-    value: string;
-  };
+  params: Param[]
 
 }

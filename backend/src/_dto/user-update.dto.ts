@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsEmail, IsOptional, Length, Max } from 'class-validator';
+import { IsBoolean, IsEmail, IsOptional, Length, Max, Min } from 'class-validator';
 import { RoleEnum } from '../_enums/Role.enum';
 
 export class UserUpdateDto {
@@ -74,5 +74,16 @@ export class UserUpdateDto {
   })
   @IsOptional()
   role?: string;
+
+  @ApiProperty({
+    required: false,
+    type: Number,
+    description: 'Rate limit of the users',
+    minimum: 1000 * 5,
+    example: '3000',
+  })
+  @IsOptional()
+  @Min(1000 * 5)
+  rateLimit?: number;
 
 }

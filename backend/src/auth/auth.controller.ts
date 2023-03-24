@@ -6,7 +6,7 @@ import {
   HttpCode,
   Param,
   Query,
-  Headers, CacheKey, CacheTTL,
+  Headers, CacheKey, CacheTTL, Res,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -26,6 +26,8 @@ import { AuthForgotPasswordDto } from '../_dto/auth-forgot-password.dto';
 import { AuthRegisterDto } from '../_dto/auth-register.dto';
 import { AuthLoginDto } from '../_dto/auth-login.dto';
 import { AuthService } from './auth.service';
+import { Auth2Dto } from '../_dto/auth-2.dto';
+import { Response } from 'express';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -38,8 +40,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Validate the users' })
   @ApiOkResponse({ description: 'User has been validated' })
   @ApiNotFoundResponse({ description: 'User not found' })
-  validate(@Param('token') token: string) {
-    return this.authService.confirmMail(token);
+  async validate(@Param('token') token: string, @Res() res) {
+    await this.authService.confirmMail(token);
+    return res.redirect('http://localhost:8081/login');
   }
 
   @Get('resetPassword')
@@ -55,8 +58,9 @@ export class AuthController {
   @Post('forgotPassword')
   @ApiOperation({ summary: 'Launch the process to reset password' })
   @ApiOkResponse({ description: 'Mail sent' })
-  forgotPassword(@Body() forgotPasswordDto: AuthForgotPasswordDto) {
-    return this.authService.forgotPassword(forgotPasswordDto);
+  async forgotPassword(@Body() forgotPasswordDto: AuthForgotPasswordDto, @Res() res) {
+    await this.authService.forgotPassword(forgotPasswordDto);
+    return res.redirect('http://localhost:8081/login');
   }
 
   @Post('register')
@@ -68,8 +72,10 @@ export class AuthController {
   })
   @ApiForbiddenResponse({ description: 'User already exists' })
   @HttpCode(201)
-  register(@Body() registerDto: AuthRegisterDto) {
-    return this.authService.register(registerDto);
+  async register(@Body() registerDto: AuthRegisterDto) {
+    const res = await this.authService.register(registerDto);
+    if (res) return { message: 'User has been successfully registered', }
+    return { message: 'Something goes wrong', }
   }
 
   @Post('login')
@@ -80,6 +86,7 @@ export class AuthController {
   @ApiBadRequestResponse({
     description: 'Missing field; Invalid email or password',
   })
+  @HttpCode(200)
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
   login(@Body() loginDto: AuthLoginDto) {
     return this.authService.login(loginDto);
@@ -93,21 +100,55 @@ export class AuthController {
     return this.authService.logout(head['authorization'].split(' ')[1]);
   }
 
-  // @Post('0/register')
-  // @ApiOkResponse({ description: 'User has been successfully registered' })
-  // @ApiBadRequestResponse({
-  //   description: 'Missing field',
-  // })
-  // async auth0Register(@Body() dto: Auth0Dto) {
-  //   return await this.authService.registerWithAuth0(dto);
-  // }
+  @Post('o2/register')
+  @ApiCreatedResponse({ description: 'User has been successfully registered' })
+  @ApiBadRequestResponse({
+    description: 'Missing field: token or platform',
+  })
+  @HttpCode(201)
+  async oauth2Register(@Body() dto: Auth2Dto) {
+    const res = await this.authService.registerWith(dto);
+    if (res) return { message: 'User has been successfully registered', }
+    return { message: 'Something goes wrong', }
+  }
 
-  // @Post('0/login')
-  // @ApiOkResponse({ description: 'User has been successfully logged' })
-  // @ApiBadRequestResponse({
-  //   description: 'Missing field',
-  // })
-  // async auth0Login(@Body() dto: Auth0Dto) {
-  //   return await this.authService.loginWithAuth0(dto);
-  // }
+  @Get('o2/register')
+  @ApiCreatedResponse({ description: 'User has been successfully registered' })
+  @ApiBadRequestResponse({
+    description: 'Missing field: token or platform',
+  })
+  @ApiQuery({ name: 'token', required: false, type: String })
+  @ApiQuery({ name: 'platform', required: false, type: String })
+  @HttpCode(201)
+  async oauth2RegisterFromQuery(@Query() query, @Res() res) {
+    const data = await this.authService.registerWith(query);
+    res.redirect(`http://localhost:8081/login`);
+  }
+
+  @Post('o2/login')
+  @ApiOkResponse({ description: 'User has been successfully logged' })
+  @ApiBadRequestResponse({
+    description: 'Missing field: token or platform',
+  })
+  @ApiQuery({ name: 'token', required: false, type: String })
+  @ApiQuery({ name: 'platform', required: false, type: String })
+  @HttpCode(200)
+  async oauth2Login(@Body() dto: Auth2Dto, @Query() query) {
+    return await this.authService.loginWith(dto);
+  }
+
+  @Get('o2/login')
+  @ApiOkResponse({ description: 'User has been successfully logged' })
+  @ApiBadRequestResponse({
+    description: 'Missing field: token or platform',
+  })
+  @ApiQuery({ name: 'token', required: false, type: String })
+  @ApiQuery({ name: 'platform', required: false, type: String })
+  @HttpCode(200)
+  async oauth2LoginFromQuery(@Query() query, @Res() res: Response) {
+    const data = await this.authService.loginWith(query);
+    // res.header('Authorization', `Bearer ${data.access_token}`);
+    res.redirect(`http://localhost:8081/login?access_token=${data.access_token}&id=${data.id}&username=${data.username}&adultContent=${data.adultContent}`);
+  }
+
 }

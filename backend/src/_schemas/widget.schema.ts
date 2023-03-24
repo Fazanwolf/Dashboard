@@ -4,6 +4,14 @@ import { User } from './user.schema';
 
 export type WidgetDocument = HydratedDocument<Widget>;
 
+@Schema()
+export class Param{
+  @Prop({ type: String })
+  key: String;
+  @Prop({ type: String })
+  value: String
+}
+
 @Schema(
   { timestamps: { createdAt: 'created', updatedAt: 'updated' }
   })
@@ -11,7 +19,6 @@ export class Widget
 {
   @Prop({ required: true, default: () => new Types.ObjectId() })
   _id: string;
-
 
   @Prop({ required: true, type: mongoose.Types.ObjectId, ref: 'User' })
   user: User;
@@ -28,14 +35,8 @@ export class Widget
   @Prop({ required: true, default: true })
   enabled: boolean;
 
-  @Prop(
-    raw([{
-      key: { type: String },
-      value: { type: String }
-    }]
-    )
-  )
-  params: Record<string, string>[]
+  @Prop({ type: mongoose.Types.Array })
+  params: Param[];
 
 }
 

@@ -8,7 +8,7 @@ export class EmailService {
   constructor(private mailerService: MailerService) {}
 
   async sendForgotMail(emailDto: EmailDto) {
-    const url: string = "http://localhost:8080/auth/resetPassword" + emailDto.token;
+    const url: string = "http://localhost:8081/reset-password?token=" + emailDto.token;
     const info = await this.mailerService.sendMail({
       to: emailDto.email,
       from: '"[NO-REPLY] DASHBOARD" ' + mailjet.email,
@@ -23,7 +23,7 @@ export class EmailService {
   }
 
   async sendValidationMail(emailDto: EmailDto) {
-    const url: string = "http://localhost:8080/auth/verifyAccount?" + emailDto.token;
+    const url: string = "http://localhost:8080/auth/verifyAccount?token=" + emailDto.token + "&redirect_uri=http://localhost:8081/login"
     const info = await this.mailerService.sendMail({
       to: emailDto.email,
       from: '"[NO-REPLY] DASHBOARD" ' + mailjet.email,

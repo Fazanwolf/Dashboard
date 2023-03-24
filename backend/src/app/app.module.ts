@@ -8,11 +8,12 @@ import {UsersModule} from "../users/users.module";
 import redisStore from 'cache-manager-redis-store';
 import { AuthModule } from '../auth/auth.module';
 import { EmailModule } from '../email/email.module';
-import { ThirdpartyModule } from '../thirdparty/Thirdparty.module';
+import { ThirdpartyModule } from '../thirdparty/thirdparty.module';
 import { TokensModule } from '../tokens/tokens.module';
 import { ServicesModule } from '../services/services.module';
 import { WidgetsModule } from '../widgets/widgets.module';
 import { MeModule } from '../me/me.module';
+import { AdminModule } from '../admin/admin.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { MeModule } from '../me/me.module';
     TokensModule,
     ServicesModule,
     WidgetsModule,
-    MeModule
+    MeModule,
+    AdminModule
   ],
   controllers: [AppController],
   providers: [AppService],

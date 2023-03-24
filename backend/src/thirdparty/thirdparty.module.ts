@@ -1,15 +1,14 @@
 import { Module } from '@nestjs/common';
 import { DiscordService } from './discord.service';
-// import { GmailService } from './gmail.service_repository';
-import { MailerModule } from '@nestjs-modules/mailer';
 import { HttpModule } from '@nestjs/axios';
 import { RedditService } from './reddit.service';
 import { PapiService } from './papi.service';
 import { WakatimeService } from './wakatime.service';
-// import { GithubService } from './github.service_repository';
+import { ThirdPartyController } from './thirdparty.controller';
+import { TokensModule } from '../tokens/tokens.module';
 
 @Module({
-  imports: [HttpModule],
+  imports: [HttpModule, TokensModule],
   exports: [
     DiscordService,
     RedditService,
@@ -22,5 +21,6 @@ import { WakatimeService } from './wakatime.service';
     PapiService,
     WakatimeService,
   ],
+  controllers: [ThirdPartyController]
 })
 export class ThirdpartyModule {}

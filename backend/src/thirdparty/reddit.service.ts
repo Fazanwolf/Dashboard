@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { RequestTokenDto } from '../_dto/request-token.dto';
 import { reddit } from '../_tools/Config';
 import { lastValueFrom, map } from 'rxjs';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { urlencoded } from 'express';
 
 @Injectable()
@@ -12,6 +12,8 @@ export class RedditService {
     private readonly httpService: HttpService,
     // private tokenService: TokensService,
   ) {}
+
+  redirectURI = "http://localhost:8080/thirdparty/reddit/callback"
 
   redditURL = {
     authorize: "https://www.reddit.com/api/v1/authorize",
@@ -22,14 +24,14 @@ export class RedditService {
 
   BASIC_SCOPES: string = "identity read history save vote";
 
-  async getAuthorize(scopes: string = this.BASIC_SCOPES) {
+  async getAuthorize(redirectURI: string = this.redirectURI) {
     const params = {
       response_type: "code",
       client_id: reddit.client,
-      scope: encodeURI(scopes),
+      scope: encodeURI(this.BASIC_SCOPES),
       duration: "", // permanent
       state: "test", // test
-      redirect_uri: encodeURI("http://localhost:8080"),
+      redirect_uri: encodeURI(redirectURI),
     }
     let buildURL = this.redditURL.authorize;
     buildURL += "?response_type=" + params.response_type;
@@ -49,10 +51,13 @@ export class RedditService {
       Authorization: `Bearer ${token}`,
       "User-Agent": "Dashboard API by u/Fazanwolf"
     };
-    const response = await this.httpService
-      .get(this.redditURL.user, { headers: bearerHeader })
-      .toPromise();
-    return response.data;
+    const res = await lastValueFrom(this.httpService.get(this.redditURL.user, { headers: bearerHeader }).pipe(
+      map((response) => [response.data, response.status])
+    ));
+    if (res[1] !== 200) {
+      throw new HttpException(res[0], res[1]);
+    }
+    return res[0];
   }
 
   async getLastPost(token: string, name: string) {
@@ -60,17 +65,20 @@ export class RedditService {
       Authorization: `Bearer ${token}`,
       "User-Agent": "Dashboard API by u/Fazanwolf"
     };
-    const response = await this.httpService
-      .get(`${this.redditURL.lastPost}/${name}/submitted`, { headers: bearerHeader, params: { limit: 1 } })
-      .toPromise();
-    return response.data;
+    const res = await lastValueFrom(this.httpService.get(`${this.redditURL.lastPost}/${name}/submitted`, { headers: bearerHeader, params: { limit: 1} }).pipe(
+      map((response) => [response.data, response.status])
+    ));
+    if (res[1] !== 200) {
+      throw new HttpException(res[0], res[1]);
+    }
+    return res[0];
   }
 
-  async getToken(dto: RequestTokenDto) {
+  async getToken(dto: RequestTokenDto, redirectURI: string = this.redirectURI) {
     const formData = new FormData();
     formData.append('grant_type', 'authorization_code');
     formData.append('code', dto.code);
-    formData.append('redirect_uri', 'http://localhost:8080');
+    formData.append('redirect_uri', redirectURI);
 
     const auth = btoa(reddit.client + ':' + reddit.secret);
 

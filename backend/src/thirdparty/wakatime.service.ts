@@ -1,8 +1,9 @@
 import { HttpService } from '@nestjs/axios';
 import { wakatime } from '../_tools/Config';
-import { lastValueFrom, map } from 'rxjs';
-import { Injectable } from '@nestjs/common';
+import { catchError, lastValueFrom, map } from 'rxjs';
+import { HttpException, Injectable } from '@nestjs/common';
 import { RequestTokenDto } from '../_dto/request-token.dto';
+import axios, { AxiosError } from 'axios';
 
 @Injectable()
 export class WakatimeService {
@@ -18,16 +19,16 @@ export class WakatimeService {
     code_until_today: "https://wakatime.com/api/v1/users/current/all_time_since_today"
   }
 
-  redirect_uri: string = "http://localhost:8080";
+  redirect_uri: string = "http://localhost:8080/thirdparty/wakatime/callback";
 
   BASIC_SCOPES: string = "email read_logged_time read_stats read_orgs read_private_leaderboards";
 
-  async getAuthorize(scopes: string = this.BASIC_SCOPES) {
+  getAuthorize(redirectURI = this.redirect_uri) {
     const params = {
       response_type: "code", // or token
       client_id: wakatime.client,
-      scope: encodeURI(scopes),
-      redirect_uri: encodeURI(this.redirect_uri),
+      scope: encodeURI(this.BASIC_SCOPES),
+      redirect_uri: encodeURI(redirectURI),
     }
     return `${this.wakatimeURL.authorize}?response_type=${params.response_type}&client_id=${wakatime.client}&scope=${params.scope}&redirect_uri=${params.redirect_uri}`
   }
@@ -36,30 +37,55 @@ export class WakatimeService {
     const bearerHeader = {
       Authorization: `Bearer ${token}`,
     };
-    const response = await this.httpService
-      .get(`${this.wakatimeURL.user}`, { headers: bearerHeader })
-      .toPromise();
-    return response.data;
+    console.log(bearerHeader)
+
+    try {
+      const res = await lastValueFrom(this.httpService.get(`${this.wakatimeURL.user}`, { headers: bearerHeader }).pipe(
+        map((response) => [response.data, response.status])
+      ));
+      if (res[1] !== 200) {
+        throw new HttpException(res[0], res[1]);
+      }
+      return res[0];
+    } catch (err) {
+      throw new HttpException(err.response.data, err.response.status);
+    }
+    // const { data } = await lastValueFrom(
+    //   this.httpService
+    //     .get(`${this.wakatimeURL.user}`, { headers: bearerHeader })
+    //     .pipe(catchError((err) => throw new HttpException(err.response.data, err.response.status)))
+    // );
+    // return data;
   }
 
   async getCodeTimeUntilToday(token: string) {
     const bearerHeader = {
       Authorization: `Bearer ${token}`,
     };
-    const response = await this.httpService
-      .get(`${this.wakatimeURL.code_until_today}`, { headers: bearerHeader })
-      .toPromise();
-    return response.data;
+
+    const res = await lastValueFrom(this.httpService.get(`${this.wakatimeURL.code_until_today}`, { headers: bearerHeader }).pipe(
+      map((response) => [response.data, response.status])
+    ));
+    if (res[1] !== 200) {
+      throw new HttpException(res[0], res[1]);
+    }
+    return res[0];
+    /*const { data } = await lastValueFrom(
+      this.httpService
+        .get(`${this.wakatimeURL.code_until_today}`, { headers: bearerHeader })
+        .pipe(catchError((err: AxiosError) => {
+          throw new HttpException(err.response.data, err.response.status);
+        }))
+    );*/
   }
 
-  async getToken(dto: RequestTokenDto) {
+  async getToken(dto: RequestTokenDto, redirectURI = this.redirect_uri) {
     const formData = new FormData();
     formData.append('grant_type', 'authorization_code');
     formData.append('code', dto.code);
     formData.append('client_id', wakatime.client);
     formData.append('client_secret', wakatime.secret);
-    formData.append('redirect_uri', this.redirect_uri);
-    console.log(formData);
+    formData.append('redirect_uri', redirectURI);
     return (await lastValueFrom(
       this.httpService
         .post(this.wakatimeURL.token, formData)

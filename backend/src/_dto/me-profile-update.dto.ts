@@ -29,6 +29,16 @@ export class MeProfileUpdateDto {
 
   @ApiProperty({
     required: false,
+    type: Number,
+    description: 'Allow to  see adult content',
+    example: 'false',
+  })
+  @IsOptional()
+  @IsBoolean()
+  adultContent?: number;
+
+  @ApiProperty({
+    required: false,
     type: Boolean,
     description: 'Allow to  see adult content',
     example: 'false',

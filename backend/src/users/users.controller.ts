@@ -95,24 +95,4 @@ export class UsersController {
     return await this.usersService.update(id, updateUserDto);
   }
 
-
-  @Post("createAdmin")
-  @ApiOperation({ summary: 'Create my admin account' })
-  @ApiCreatedResponse({ description: 'Admin "Fazanwolf" created' })
-  async createMyAdminAccount() {
-    const dto: UserCreateDto = {
-      email: "fazanwolf@gmail.com",
-      password: "fw974admin",
-      username: "fazanwolf",
-    }
-    const user = await this.usersService.create(dto);
-    let updateDto: UserUpdateDto = {
-      adultContent: true,
-      verified: true,
-      role: RoleEnum.ADMIN
-    }
-
-    return await this.usersService.update(user._id, updateDto);
-  }
-
 }

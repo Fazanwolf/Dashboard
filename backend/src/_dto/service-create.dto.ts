@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsEmail, IsOptional, Length, Max } from 'class-validator';
 import { Prop } from '@nestjs/mongoose';
+import { Widget } from '../_schemas/widget.schema';
 
 export class ServiceCreateDto {
 
@@ -39,12 +40,22 @@ export class ServiceCreateDto {
   @ApiProperty({
     required: true,
     description: 'Widgets of the service',
-    type: String,
+    type: Widget,
     example: [
-      "...",
-      "...",
+      {
+        "name": "",
+        "description": "",
+        "icon": "",
+        "enabled": false,
+        "params": [
+          {
+            key: "Number of server",
+            value: "number"
+          }
+        ]
+      }
     ],
   })
-  widgets: string[];
+  widgets: Widget[];
 
 }

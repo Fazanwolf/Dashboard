@@ -6,6 +6,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { MeProfileUpdateDto } from '../_dto/me-profile-update.dto';
 import { MeWidgetUpdateDto } from '../_dto/me-widget-update.dto';
+import { WidgetCreateDto } from '../_dto/widget-create.dto';
 
 @Injectable()
 export class MeService {
@@ -27,10 +28,7 @@ export class MeService {
       adultContent,
     }
 
-    return {
-      message: 'User data successfully retrieved',
-      data: user,
-    }
+    return user;
   }
 
   async updateMe(head, body: MeProfileUpdateDto) {
@@ -48,25 +46,36 @@ export class MeService {
 
   async getMyServices(head) {
     const { id } = this.jwtService.decode(head) as { id };
-    const services = await this.servicesService.getServices();
-    return {
-      message: 'User services successfully retrieved',
-      data: services,
+    const servicesOrigin = await this.servicesService.getServices();
+
+    for (let i = 0; i < servicesOrigin.length; i++) {
+      for (let j = 0; j < servicesOrigin[i].widgets.length; j++) {
+        delete servicesOrigin[i].widgets[j]._id;
+        delete servicesOrigin[i].widgets[j].user;
+      }
     }
+
+    return servicesOrigin.map(({ name, description, widgets, icon, url, ...rest }) => {
+        return {
+          name: name,
+          description: description,
+          icon: icon,
+          url: url,
+          widgets: widgets
+        };
+      },
+    );
   }
 
   async getMyWidgets(head) {
     const { id } = this.jwtService.decode(head) as { id };
-    const widgets = await this.widgetsService.getWidgetsOf(id);
-    return {
-      message: 'User widgets successfully retrieved',
-      data: widgets,
-    }
+    return await this.widgetsService.getWidgetsOf(id);
   }
 
-  async createMyWidget(head, body: MeWidgetUpdateDto) {
+  async createMyWidget(head, body: WidgetCreateDto) {
     const { id } = this.jwtService.decode(head) as { id };
-    await this.widgetsService.create(id, body);
+    body.user = id;
+    await this.widgetsService.create(body);
     return { message: 'Widget successfully created' };
   }
 

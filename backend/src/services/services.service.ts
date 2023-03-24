@@ -11,9 +11,9 @@ export class ServicesService {
     @InjectModel(Service.name) private serviceModel: Model<ServiceDocument>,
   ) {}
 
-  async create(tokenDto: ServiceCreateDto) {
-    const token = new this.serviceModel(tokenDto);
-    return token.save();
+  async create(serviceDto: ServiceCreateDto) {
+    const service = new this.serviceModel(serviceDto);
+    return service.save();
   }
 
   async delete(id: string) {
@@ -21,6 +21,42 @@ export class ServicesService {
     if (!user) throw new NotFoundException("Service not found.");
     return await this.serviceModel.findByIdAndDelete(id).exec();
   }
+
+  async drop() {
+    const services = await this.serviceModel.find().exec();
+    for (const service of services) {
+      await this.serviceModel.findByIdAndDelete(service._id).exec();
+    }
+    return {
+      message: "Services collection drop."
+    }
+  }
+
+  async getServicesAbout() {
+    const servicesOrigin = await this.serviceModel.find().exec();
+
+    for (let i = 0; i < servicesOrigin.length; i++) {
+      for (let j = 0; j < servicesOrigin[i].widgets.length; j++) {
+        delete servicesOrigin[i].widgets[j]._id;
+        delete servicesOrigin[i].widgets[j].user;
+        delete servicesOrigin[i].widgets[j].icon;
+        delete servicesOrigin[i].widgets[j].enabled;
+      }
+    }
+
+    const servicesRes = servicesOrigin.map( ({ name, description, widgets, ...rest }) => {
+        console.log(name, description, widgets);
+        return {
+          name: name,
+          description: description,
+          widgets: widgets
+        };
+      },
+    );
+
+    return servicesRes;
+  }
+
 
   async getServices() {
     return await this.serviceModel.find().exec();

@@ -7,6 +7,8 @@ import { UsersModule } from '../users/users.module';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from '../_stategies/jwt.stategy';
 import { EmailModule } from '../email/email.module';
+import { ThirdpartyModule } from '../thirdparty/thirdparty.module';
+import { TokensModule } from '../tokens/tokens.module';
 
 @Module({
   controllers: [AuthController],
@@ -19,6 +21,8 @@ import { EmailModule } from '../email/email.module';
       signOptions: { expiresIn: `${jwt.expire}` },
     }),
     UsersModule,
+    ThirdpartyModule,
+    TokensModule
   ],
   exports: [AuthService],
 })

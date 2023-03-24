@@ -38,6 +38,18 @@ export class WidgetsService {
     return widget;
   }
 
+  async retreiveAllEnabledOf(id: string) {
+    const widgets = await this.widgetModel.find({ user: id, enabled: true }).exec();
+    if (!widgets) throw new NotFoundException("That user does not have any widget.");
+    return widgets;
+  }
+
+  async retreiveAllDisabledOf(id: string) {
+    const widgets = await this.widgetModel.find({ user: id, enabled: false }).exec();
+    if (!widgets) throw new NotFoundException("That user does not have any widget.");
+    return widgets;
+  }
+
   async deleteWidgetsOf(id: string) {
     const widgets = await this.widgetModel.find({ user: id }).exec();
     if (!widgets) throw new NotFoundException("That user does not have any widget.");

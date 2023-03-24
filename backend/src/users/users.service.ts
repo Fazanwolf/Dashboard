@@ -1,13 +1,12 @@
 import { Model } from 'mongoose';
 import { CACHE_MANAGER, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { User, UserDocument } from "../_schemas/user.schema";
+import { User, UserDocument } from '../_schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { UserCreateDto } from "../_dto/user-create.dto";
-import { UserUpdateDto } from "../_dto/user-update.dto";
-import { Cache } from "cache-manager";
-import { JwtService } from '@nestjs/jwt';
+import { UserCreateDto } from '../_dto/user-create.dto';
+import { UserUpdateDto } from '../_dto/user-update.dto';
+import { Cache } from 'cache-manager';
 import { jwt } from '../_tools/Config';
-import * as bcrypt from "bcrypt";
+import * as bcrypt from 'bcrypt';
 import { AuthRegisterDto } from '../_dto/auth-register.dto';
 import { TokensService } from '../tokens/tokens.service';
 
@@ -52,9 +51,8 @@ export class UsersService {
   }
 
   async getOneByEmail(email: string): Promise<User> {
-    const user = (await this.userModel.find({email: email}).exec())[0];
-    if (!user) throw new ForbiddenException("Unknown email.");
-    return user;
+    // if (!user) throw new ForbiddenException("Unknown email.");
+    return (await this.userModel.find({ email: email }).exec())[0];
   }
 
   async update(id: string, updateUserDto: UserUpdateDto) {

@@ -1,5 +1,6 @@
-import { HydratedDocument, Types, now } from "mongoose";
+import mongoose, { HydratedDocument, Types, now } from "mongoose";
 import { Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Widget } from './widget.schema';
 
 export type ServiceDocument = HydratedDocument<Service>;
 
@@ -22,6 +23,9 @@ export class Service
 
   @Prop({ required: true, default: "" })
   url: string;
+
+  @Prop({ required: true, type: mongoose.Types.Array })
+  widgets: Widget[];
 
 }
 

@@ -4,11 +4,13 @@ import { discord } from '../_tools/Config';
 import { lastValueFrom, map } from 'rxjs';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { RequestTokenDto } from '../_dto/request-token.dto';
+import { TokensService } from '../tokens/tokens.service';
 
 @Injectable()
 export class DiscordService {
   constructor(
     private readonly httpService: HttpService,
+    private readonly tokensService: TokensService
     // private tokenService: TokensService,
   ) {}
 
@@ -20,6 +22,8 @@ export class DiscordService {
     guilds: "https://discord.com/api/users/@me/guilds",
     guild: "https://discord.com/api/guilds"
   }
+
+  redirect_uri: string = "http://localhost:8080/thirdparty/discord/refresh/callback";
 
   BASIC_SCOPES: string = "identify guilds email connections gdm.join guilds.join guilds.members.read";
 
@@ -61,15 +65,14 @@ export class DiscordService {
     return guilds.length;
   }
 
-  async getAuthorize(scopes: string = this.BASIC_SCOPES) {
+  async getAuthorize(redirectURI = this.redirect_uri) {
     const params = {
       response_type: "code",
       client_id: discord.client,
-      scope: scopes.split(' ').join('%20')
+      scope: this.BASIC_SCOPES.split(' ').join('%20'),
+      redirect_uri: redirectURI
     }
-    return `${this.discordURL.authorize}?response_type=${params.response_type}&client_id=${discord.client}&scope=${params.scope}`
-    // const response = await this.httpService.get(`${this.discordURL.authorize}`, { params: params }).toPromise();
-    // return (response.data);
+    return `${this.discordURL.authorize}?response_type=${params.response_type}&client_id=${discord.client}&scope=${params.scope}&redirect_uri=${params.redirect_uri}`;
   }
 
   async getUser(token: string) {
@@ -97,13 +100,15 @@ export class DiscordService {
     return response.data;
   }
 
-  async getToken(dto: RequestTokenDto) {
+  async getToken(dto: RequestTokenDto, redirectURI = this.redirect_uri) {
     const formData = new FormData();
     formData.append('grant_type', 'authorization_code');
     formData.append('code', dto.code);
     formData.append('client_id', discord.client);
     formData.append('client_secret', discord.secret);
+    formData.append('redirect_uri', redirectURI);
     if (dto.state) formData.append('state', dto.state);
+    console.log(dto);
     return (await lastValueFrom(
       this.httpService
         .post(this.discordURL.token, formData)
@@ -134,9 +139,10 @@ export class DiscordService {
     // return users;
   }
 
-  async discordOauth2Login(dto: RequestTokenDto)/*: Promise<User>*/ {
-    const { access_token } = await this.getToken(dto);
-    const { id, email } = await this.getUser(access_token);
+  async discordLogin(dto: RequestTokenDto)/*: Promise<User>*/ {
+    // const { access_token } = await this.getToken(dto);
+    // const { id, email } = await this.getUser(access_token);
+
     //
     // const userDto: LoginAuthDto = {
     //   mail: email,
