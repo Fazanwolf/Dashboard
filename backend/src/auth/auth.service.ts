@@ -107,7 +107,8 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Invalid login.');
     const { password } = user;
     const isValid = await bcrypt.compare(loginDto.password, password);
-    if (!isValid) throw new UnauthorizedException('Invalid login.');
+    if (!isValid) throw new UnauthorizedException('Invalid password.');
+    if (!user.verified) throw new UnauthorizedException('User not verified.');
 
     const payload = {
       id: user._id,
@@ -148,14 +149,12 @@ export class AuthService {
     console.log(userPlatform);
     const user = await this.userService.getOneByEmail(userPlatform.email);
     if (user) throw new ForbiddenException('User already exists.');
-    console.log(user);
 
     const newUser = await this.userService.create({
       username: userPlatform.username,
       email: userPlatform.email,
       password: dto.platform + userPlatform.id,
     });
-    console.log(newUser);
 
     await this.userService.update(newUser._id, { verified: true });
     delete newUser.personalKey;

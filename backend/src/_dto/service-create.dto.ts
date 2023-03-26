@@ -39,6 +39,14 @@ export class ServiceCreateDto {
 
   @ApiProperty({
     required: true,
+    description: 'Service content for adult',
+    type: Boolean,
+    example: false,
+  })
+  adultContent: boolean;
+
+  @ApiProperty({
+    required: true,
     description: 'Widgets of the service',
     type: Widget,
     example: [

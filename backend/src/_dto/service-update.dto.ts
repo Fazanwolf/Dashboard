@@ -41,6 +41,15 @@ export class ServiceUpdateDto {
 
   @ApiProperty({
     required: false,
+    description: 'Service content for adult',
+    type: Boolean,
+    example: false,
+  })
+  @IsOptional()
+  adultContent?: boolean;
+
+  @ApiProperty({
+    required: false,
     description: 'Widgets of the service',
     type: String,
     example: [

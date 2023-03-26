@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsEmail, IsOptional, Length, Max } from 'class-validator';
+import { IsBoolean, IsEmail, IsNumber, IsOptional, IsPositive, Length, Max } from 'class-validator';
 import { RoleEnum } from '../_enums/Role.enum';
 
 export class MeProfileUpdateDto {
@@ -30,12 +30,13 @@ export class MeProfileUpdateDto {
   @ApiProperty({
     required: false,
     type: Number,
-    description: 'Allow to  see adult content',
-    example: 'false',
+    description: 'The rate limit of the user',
+    example: '5000',
   })
   @IsOptional()
-  @IsBoolean()
-  adultContent?: number;
+  @IsNumber()
+  @IsPositive()
+  rateLimit?: number;
 
   @ApiProperty({
     required: false,

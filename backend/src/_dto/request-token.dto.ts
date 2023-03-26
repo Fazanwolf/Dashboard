@@ -9,4 +9,7 @@ export class RequestTokenDto {
 
   @ApiProperty()
   state?: string;
+
+  @ApiProperty()
+  redirect_uri?: string;
 }

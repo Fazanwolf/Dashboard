@@ -62,7 +62,8 @@ export class WidgetsService {
   async update(id: string, widgetDto: WidgetUpdateDto) {
     const widget = await this.getWidget(id);
     if (!widget) throw new NotFoundException("Widget not found.");
-    return await this.widgetModel.findByIdAndUpdate(id, widgetDto).exec();
+    await this.widgetModel.findByIdAndUpdate(id, widgetDto).exec();
+    return await this.getWidget(id);
   }
 
 }

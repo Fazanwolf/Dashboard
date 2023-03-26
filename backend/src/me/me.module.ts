@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { MeController } from './me.controller';
 import { MeService } from './me.service';
 import { jwt } from '../_tools/Config';
+import { ThirdpartyModule } from '../thirdparty/thirdparty.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { jwt } from '../_tools/Config';
       secret: `${jwt.secret}`,
       signOptions: { expiresIn: `${jwt.expire}` },
     }),
+    ThirdpartyModule
   ],
   controllers: [MeController],
   providers: [MeService],

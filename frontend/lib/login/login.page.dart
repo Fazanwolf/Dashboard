@@ -187,15 +187,15 @@ class _LoginState extends State<Login> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
-                          IconButton(
-                            onPressed: () async {
-                              await _launchURL("reddit", "login");
-                            },
-                            icon: const Icon(Icons.reddit),
-                            iconSize: 30.0,
-                            tooltip: 'Reddit',
-                          ),
-                          const SizedBox(width: 35.0),
+                          // IconButton(
+                          //   onPressed: () async {
+                          //     await _launchURL("reddit", "login");
+                          //   },
+                          //   icon: const Icon(Icons.reddit),
+                          //   iconSize: 30.0,
+                          //   tooltip: 'Reddit',
+                          // ),
+                          // const SizedBox(width: 35.0),
                           IconButton(
                             onPressed: () async {
                               await _launchURL("discord", "login");

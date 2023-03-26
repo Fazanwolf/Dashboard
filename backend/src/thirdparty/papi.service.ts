@@ -26,7 +26,7 @@ export class PapiService {
     return buildURL;
   }
 
-  async getPornstar(dto: PapiDto) {
+  async getPornstar(dto?: PapiDto) {
     const header: AxiosHeaders = AxiosHeaders.concat({ 'x-rapidapi-key': papi.secret, 'x-rapidapi-host': papi.host });
 
     let builedURL = this.buildURL(dto);

@@ -7,6 +7,16 @@ import { JwtService } from '@nestjs/jwt';
 import { MeProfileUpdateDto } from '../_dto/me-profile-update.dto';
 import { MeWidgetUpdateDto } from '../_dto/me-widget-update.dto';
 import { WidgetCreateDto } from '../_dto/widget-create.dto';
+import { TokenUpdateDto } from '../_dto/token-update.dto';
+import { DiscordService } from '../thirdparty/discord.service';
+import { RedditService } from '../thirdparty/reddit.service';
+import { PapiService } from '../thirdparty/papi.service';
+import { WakatimeService } from '../thirdparty/wakatime.service';
+import { Cron, Interval, SchedulerRegistry } from '@nestjs/schedule';
+import { User } from '../_schemas/user.schema';
+import { Token } from '../_schemas/token.schema';
+import { CronJob } from 'cron';
+import { Widget } from '../_schemas/widget.schema';
 
 @Injectable()
 export class MeService {
@@ -16,6 +26,11 @@ export class MeService {
     private servicesService: ServicesService,
     private widgetsService: WidgetsService,
     private jwtService: JwtService,
+    private readonly discordService: DiscordService,
+    private readonly redditService: RedditService,
+    private readonly papiService: PapiService,
+    private readonly wakatimeService: WakatimeService,
+    private schedulerRegistry: SchedulerRegistry,
   ) {}
 
   async getMe(head) {
@@ -44,9 +59,94 @@ export class MeService {
     return { message: 'Profile successfully deleted' };
   }
 
+  async refreshTokens(query) {
+    const { email, token, platform, username } = query;
+
+    let data;
+
+    if (email)
+      data = await this.usersService.getOneByEmail(email);
+    if (username) {
+      data = await this.usersService.getOneByUsername(username);
+      if (!data) {
+        data = await this.usersService.getOneByUsername(username.toLowerCase());
+        if (!data) {
+          data = await this.usersService.getOneByUsername(username.toUpperCase());
+        }
+      }
+    }
+
+    if (!data) return { message: "User not found" };
+
+    let dto: TokenUpdateDto = {};
+
+    if (platform === 'wakatime') dto.wakatime = token;
+    if (platform === 'reddit') dto.reddit = token;
+    if (platform === 'discord') dto.discord = token;
+    await this.tokensService.updateTokenOf(data._id, dto);
+    return { message: "Token refreshed" };
+  }
+
+  async checkTokens(query: { id: string, platform?: string}) {
+    const { id, platform } = query;
+
+    const tokens = await this.tokensService.getTokenOf(id);
+    let reddit = false;
+    let discord = false;
+    let wakatime = false;
+
+    if (!platform) {
+      if (tokens.reddit === undefined || tokens.reddit == "empty")
+        return this.redditService.getAuthorize("http://172.20.0.7:8080/thirdparty/reddit/refresh/callback");
+      if (tokens.discord === undefined || tokens.discord == "empty")
+        return this.discordService.getAuthorize("http://172.20.0.7:8080/thirdparty/discord/refresh/callback");
+      if (tokens.wakatime === undefined || tokens.wakatime == "empty")
+        return this.wakatimeService.getAuthorize("http://172.20.0.7:8080/thirdparty/wakatime/refresh/callback");
+      try {
+        reddit = await this.redditService.getUser(tokens.reddit);
+        discord = await this.discordService.getUser(tokens.discord);
+        wakatime = await this.wakatimeService.getUser(tokens.wakatime);
+      } catch (e) {
+        if (!reddit) return this.redditService.getAuthorize("http://172.20.0.7:8080/thirdparty/reddit/refresh/callback");
+        if (!discord) return this.discordService.getAuthorize("http://172.20.0.7:8080/thirdparty/discord/refresh/callback");
+        if (!wakatime) return this.wakatimeService.getAuthorize("http://172.20.0.7:8080/thirdparty/wakatime/refresh/callback");
+      }
+    }
+    try {
+      if (platform == "reddit") {
+        if (tokens.reddit === undefined || tokens.reddit == "empty")
+          return this.redditService.getAuthorize("http://172.20.0.7:8080/thirdparty/reddit/refresh/callback");
+        reddit = await this.redditService.getUser(tokens.reddit);
+      }
+      if (platform == "discord") {
+        if (tokens.discord === undefined || tokens.discord == "empty")
+          return this.discordService.getAuthorize("http://172.20.0.7:8080/thirdparty/discord/refresh/callback");
+        discord = await this.discordService.getUser(tokens.discord);
+      }
+      if (platform == "wakatime") {
+        if (tokens.wakatime === undefined || tokens.wakatime == "empty")
+          return this.wakatimeService.getAuthorize("http://172.20.0.7:8080/thirdparty/wakatime/refresh/callback");
+        wakatime = await this.wakatimeService.getUser(tokens.wakatime);
+      }
+    } catch (e) {
+      if (!wakatime) return this.wakatimeService.getAuthorize("http://172.20.0.7:8080/thirdparty/wakatime/refresh/callback");
+      if (!reddit) return this.redditService.getAuthorize("http://172.20.0.7:8080/thirdparty/reddit/refresh/callback");
+      if (!discord) return this.discordService.getAuthorize("http://172.20.0.7:8080/thirdparty/discord/refresh/callback");
+    }
+    return "Nothing to refresh";
+  }
+
+  async getNumberOfWidgets(head) {
+    return (await this.getMyWidgets(head)).length;
+  }
+
   async getMyServices(head) {
     const { id } = this.jwtService.decode(head) as { id };
-    const servicesOrigin = await this.servicesService.getServices();
+    const user = await this.usersService.getOne(id);
+
+    let servicesOrigin;
+    if (user.adultContent) servicesOrigin = await this.servicesService.getServices();
+    else servicesOrigin = await this.servicesService.getServicesWithoutAdultContent();
 
     for (let i = 0; i < servicesOrigin.length; i++) {
       for (let j = 0; j < servicesOrigin[i].widgets.length; j++) {
@@ -78,6 +178,53 @@ export class MeService {
     await this.widgetsService.create(body);
     return { message: 'Widget successfully created' };
   }
+
+
+
+
+  async manageEveryWidgets(user: User, tokens: Token, widgets: Widget[]) {
+    console.log("manageEveryWidgets");
+
+    for (const widget of widgets) {
+      if (widget.icon == "reddit") {
+        const data = await this.redditService.getLastPost(tokens.reddit, user.username);
+        await this.widgetsService.update(widget._id, { result: data.toString() });
+      }
+      if (widget.icon == "discord") {
+        const data = await this.discordService.getGuilds(tokens.discord);
+        await this.widgetsService.update(widget._id, { result: data.toString() });
+      }
+      if (widget.icon == "wakatime") {
+        const data = await this.wakatimeService.getCodeTimeUntilToday(tokens.wakatime);
+        await this.widgetsService.update(widget._id, { result: data.toString() });
+      }
+      if (widget.icon == "papi") {
+        const data = await this.papiService.getPornstar();
+        await this.widgetsService.update(widget._id, { result: data.toString() });
+      }
+    }
+
+  }
+
+  @Interval((1000 * 60 * 5))
+  async manageEveryUsers() {
+    console.log("managing every users");
+
+    const users = await this.usersService.getAll();
+    for (const user of users) {
+      // if (this.schedulerRegistry.getInterval(user._id) != undefined)
+      //   this.schedulerRegistry.deleteInterval(user._id);
+      const tokens = await this.tokensService.getTokenOf(user._id);
+      const widgets = await this.widgetsService.retreiveAllEnabledOf(user._id);
+
+      let callback = async () => {
+        await this.manageEveryWidgets(user, tokens, widgets);
+      };
+      const interval = setInterval(callback, user.rateLimit);
+      this.schedulerRegistry.addInterval(user._id, interval);
+    }
+  }
+
 
   async updateMyWidget(head, targetId: string, body: MeWidgetUpdateDto) {
     const { id } = this.jwtService.decode(head) as { id };

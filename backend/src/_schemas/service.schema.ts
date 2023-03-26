@@ -24,6 +24,9 @@ export class Service
   @Prop({ required: true, default: "" })
   url: string;
 
+  @Prop({ required: true, default: false })
+  adultContent: boolean;
+
   @Prop({ required: true, type: mongoose.Types.Array })
   widgets: Widget[];
 

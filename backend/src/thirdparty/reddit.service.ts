@@ -13,18 +13,19 @@ export class RedditService {
     // private tokenService: TokensService,
   ) {}
 
-  redirectURI = "http://localhost:8080/thirdparty/reddit/callback"
+  redirectURI = "http://172.20.0.7:8080/thirdparty/reddit/refresh/callback"
 
   redditURL = {
     authorize: "https://www.reddit.com/api/v1/authorize",
     token: "https://www.reddit.com/api/v1/access_token",
     user: "https://oauth.reddit.com/api/v1/me",
+    userPref: "https://oauth.reddit.com/api/v1/me/prefs",
     lastPost: "https://oauth.reddit.com/user"
   }
 
   BASIC_SCOPES: string = "identity read history save vote";
 
-  async getAuthorize(redirectURI: string = this.redirectURI) {
+  getAuthorize(redirectURI: string = this.redirectURI) {
     const params = {
       response_type: "code",
       client_id: reddit.client,
@@ -52,6 +53,20 @@ export class RedditService {
       "User-Agent": "Dashboard API by u/Fazanwolf"
     };
     const res = await lastValueFrom(this.httpService.get(this.redditURL.user, { headers: bearerHeader }).pipe(
+      map((response) => [response.data, response.status])
+    ));
+    if (res[1] !== 200) {
+      throw new HttpException(res[0], res[1]);
+    }
+    return res[0];
+  }
+
+  async getUserPref(token: string) {
+    const bearerHeader = {
+      Authorization: `Bearer ${token}`,
+      "User-Agent": "Dashboard API by u/Fazanwolf"
+    };
+    const res = await lastValueFrom(this.httpService.get(this.redditURL.userPref, { headers: bearerHeader }).pipe(
       map((response) => [response.data, response.status])
     ));
     if (res[1] !== 200) {

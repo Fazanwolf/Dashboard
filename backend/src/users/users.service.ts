@@ -9,13 +9,16 @@ import { jwt } from '../_tools/Config';
 import * as bcrypt from 'bcrypt';
 import { AuthRegisterDto } from '../_dto/auth-register.dto';
 import { TokensService } from '../tokens/tokens.service';
+import { WidgetsService } from '../widgets/widgets.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly tokenService: TokensService,
+    private readonly widgetsService: WidgetsService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+
   ) {}
 
   async manageUserCache(id: string) {
@@ -55,6 +58,11 @@ export class UsersService {
     return (await this.userModel.find({ email: email }).exec())[0];
   }
 
+  async getOneByUsername(username: string): Promise<User> {
+    // if (!user) throw new ForbiddenException("Unknown email.");
+    return (await this.userModel.find({ username: username }).exec())[0];
+  }
+
   async update(id: string, updateUserDto: UserUpdateDto) {
     const cached: User = await this.manageUserCache(id);
     
@@ -67,14 +75,14 @@ export class UsersService {
       cached.password = await this.hashPassword(cached.password);
       const userUpdated: User = await this.userModel.findByIdAndUpdate(cached._id, updateUserDto).exec();
       await this.cacheManager.set(id, userUpdated);
-      return userUpdated;
+      return await this.userModel.findById(id).exec();
     }
     const user = await this.userModel.findById(id).exec();
     if (!user) throw new NotFoundException("User not found.");
     if (user.email == updateUserDto.email && user._id != id) throw new ForbiddenException("Email already exists.");
     const userUpdated = await this.userModel.findByIdAndUpdate(id, updateUserDto).exec();
     await this.cacheManager.set(id, userUpdated);
-    return userUpdated;
+    return await this.userModel.findById(id).exec();
   }
 
   async delete(id: string) {
@@ -83,6 +91,7 @@ export class UsersService {
     const user: User = await this.userModel.findById(id).exec();
     if (!user) throw new NotFoundException("User not found.");
     await this.tokenService.deleteTokenOf(id);
+    await this.widgetsService.deleteWidgetsOf(id);
     return await this.userModel.findByIdAndDelete(id).exec();
   }
 

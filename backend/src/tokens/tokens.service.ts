@@ -37,7 +37,8 @@ export class TokensService {
   async updateTokenOf(id: string, tokenDto: TokenUpdateDto): Promise<Token> {
     const getToken = await this.getTokenOf(id);
     if (!getToken) throw new NotFoundException("User not found.");
-    return await this.tokenModel.findByIdAndUpdate(getToken._id, tokenDto).exec();
+    await this.tokenModel.findByIdAndUpdate(getToken._id, tokenDto).exec();
+    return await this.getTokenOf(id);
   }
 
 }

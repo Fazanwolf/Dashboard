@@ -52,10 +52,14 @@ export class AdminController {
     description: "List a certain amount server",
     enabled: false,
     icon: "discord",
+    result: "no_data",
+    idx: -1,
     params: [
       {
         key: "How many?",
         value: "Number",
+        required: true,
+        type: 'number'
       }
     ]
   }
@@ -67,6 +71,8 @@ export class AdminController {
     description: "Show your latest post",
     enabled: false,
     icon: "reddit",
+    result: "no_data",
+    idx: -1,
     params: []
   }
 
@@ -76,6 +82,8 @@ export class AdminController {
     name: "Global code time",
     description: "Show the time you passed to code until today",
     enabled: false,
+    idx: -1,
+    result: "no_data",
     icon: "wakatime",
     params: []
   }
@@ -86,15 +94,21 @@ export class AdminController {
     name: "Discover Pornstar",
     description: "List of pornstars",
     enabled: false,
-    icon: "discord",
+    result: "no_data",
+    idx: -1,
+    icon: "papi",
     params: [
       {
         key: "How many?",
         value: "Number",
+        required: true,
+        type: 'number'
       },
       {
         key: "Ethnicity",
         value: "String",
+        required: false,
+        type: 'string'
       }
     ]
   }
@@ -110,6 +124,7 @@ export class AdminController {
       description: "Discord is a free and secure all-in-one voice and text chat for gamers.",
       url: "https://discord.com/",
       icon: "discord",
+      adultContent: false,
       widgets: [
         this.discordWidget,
       ],
@@ -120,6 +135,7 @@ export class AdminController {
       description: 'Reddit is an American social news aggregation, content rating, and discussion website.',
       url: "https://www.reddit.com/",
       icon: "reddit",
+      adultContent: false,
       widgets: [
         this.redditWidget
       ],
@@ -130,6 +146,7 @@ export class AdminController {
       description: "WakaTime is a collection of open source IDE plugins for insights about your programming.",
       url: "https://wakatime.com/dashboard",
       icon: "wakatime",
+      adultContent: false,
       widgets: [
         this.wakatimeWidget
       ],
@@ -140,6 +157,7 @@ export class AdminController {
       description: "Huge database of pornstar",
       url: "https://www.papi.rest/",
       icon: "papi",
+      adultContent: true,
       widgets: [
         this.papiWidget
       ],

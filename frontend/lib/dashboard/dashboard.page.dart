@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'dart:html';
 
 import 'package:flutter/material.dart';
+import 'package:frontend/dashboard/dashboard.request.dart';
+import 'package:frontend/dashboard/dashboard_container.dart';
+import 'package:frontend/services/services_request.dart';
 import 'package:frontend/widgets/logged_app_bar.dart';
 import 'package:localstorage/localstorage.dart';
 import 'package:reorderables/reorderables.dart';
-import 'package:frontend/widgets/widget_container.dart';
+import 'package:frontend/dashboard/widget_container.dart';
 
 class Dashboard extends StatefulWidget {
 
@@ -18,41 +22,38 @@ class _DashboardState extends State<Dashboard> {
 
   final LocalStorage storage = LocalStorage('user.json');
 
-  final List<Widget> _list = <Widget> [
-    ListTile(title: WidgetContainer(
-      state: false,
-      icon: 'discord',
-      data: 'UwU Im the definition of perfection UwU\n Dont cry you mothasnickers',
-      title: 'Discord - Your number of server',
-      params: {
-        "Test0": "Test0",
-        "Test1": "Test1",
-        "Test2": "Test2",
-      },
-    ),),
-    ListTile(title: WidgetContainer(
-      state: false,
-      icon: 'discord',
-      data: 'UwU Im the definition of perfection UwU\n Dont cry you mothasnickers',
-      title: 'Discord - Your number of server',
-      params: {
-        "Test0": "Test0",
-        "Test1": "Test1",
-        "Test2": "Test2",
-      },
-    ),),
-    ListTile(title: WidgetContainer(
-      state: false,
-      icon: 'discord',
-      data: 'UwU Im the definition of perfection UwU\n Dont cry you mothasnickers',
-      title: 'Discord - Your number of server',
-      params: {
-        "Test0": "Test0",
-        "Test1": "Test1",
-        "Test2": "Test2",
-      },
-    ),),
-  ];
+  late Future<List<WidgetDatas>> future;
+
+  // final StreamController<List<WidgetData>> _widgetsStreamCtrl = StreamController<List<WidgetData>>.broadcast();
+  // Stream<List<WidgetData>> get onCurrentUserChanged => _widgetsStreamCtrl.stream;
+  // void _updateWidgets(List<WidgetData> widgets) => _widgetsStreamCtrl.add();
+
+  // final List<DashboardContainer> _widgets = <DashboardContainer> [
+  //   DashboardContainer(
+  //       widget: WidgetData(
+  //         name: "List Server",
+  //         icon: "discord",
+  //         description: "List a certain amount of server",
+  //         enabled: false,
+  //         idx: 0,
+  //         result: "no_data",
+  //         params: [
+  //           Param(key: "How many?", value: "Number", type: "number", required: true),
+  //         ],
+  //       ),
+  //     ),
+  // DashboardContainer(
+  //     widget: WidgetData(
+  //       name: "Last post",
+  //       icon: "reddit",
+  //       description: "Show your latest post",
+  //       enabled: true,
+  //       idx: 1,
+  //       result: "no_data",
+  //       params: [],
+  //     ),
+  //   ),
+  // ];
 
   // late final AnimationController _controller = AnimationController(
   //   duration: const Duration(seconds: 3),
@@ -70,9 +71,17 @@ class _DashboardState extends State<Dashboard> {
   //   super.dispose();
   // }
 
+  refresh() {
+    setState(() {
+      future = getMyWidgets();
+    });
+    // future = getMyWidgets();
+  }
+
   @override
   void initState() {
     super.initState();
+    future = getMyWidgets();
   }
 
   @override
@@ -81,15 +90,84 @@ class _DashboardState extends State<Dashboard> {
     return Scaffold(
       backgroundColor: Colors.grey[300],
       appBar: const LoggedAppBar(title: 'Dashboard'),
-      body: ReorderableWrap(
-        onReorder: (oldIdx, newIdx) {
-          setState(() {
-            var tmp = _list.removeAt(oldIdx);
-            _list.insert(newIdx, tmp);
-          });
-        },
-        children: _list,
-        needsLongPressDraggable: false,
+      // body: ReorderableWrap(
+      //   spacing: 8.0,
+      //   runSpacing: 4.0,
+      //   padding: const EdgeInsets.all(8),
+      //   needsLongPressDraggable: false,
+      //
+      //   onReorder: (int oldIndex, int newIndex) {
+      //     setState(() {
+      //       if (oldIndex < newIndex) {
+      //         newIndex -= 1;
+      //       }
+      //       var item = _widgets.removeAt(oldIndex);
+      //       _widgets.insert(newIndex, item);
+      //     });
+      //   },
+      //   children: [
+      //     ListTile(
+      //       title: _widgets[0]
+      //     ),
+      //     ListTile(
+      //         title: _widgets[1]
+      //     ),
+      //   ]
+      // ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  // await updateWidgetRequest(id: id)
+                },
+                child: const Text("Save order")
+              ),
+              const SizedBox(width: 20.0),
+              ElevatedButton(
+                onPressed: () async {
+                  // await updateWidgetRequest(id: id)
+                },
+                child: const Text("Refresh")
+              ),
+            ],
+          ),
+          const SizedBox(height: 20.0),
+          FutureBuilder(
+            future: future,
+            builder: (BuildContext context, AsyncSnapshot<List<WidgetDatas>> snapshot) {
+              if (snapshot.hasData) {
+                return ReorderableWrap(
+                  onReorder: (oldIdx, newIdx) {
+                    setState(() {
+                      var tmp = snapshot.data!.removeAt(oldIdx);
+                      snapshot.data!.insert(newIdx, tmp);
+                    });
+                  },
+                  needsLongPressDraggable: false,
+                  children: [
+                    for (final item in snapshot.data!)
+                      Center(
+                        child: ListTile(
+                          title: DashboardContainer(
+                            widget: item,
+                            future: refresh,
+                          )
+                        ),
+                      )
+                  ],
+                );
+              } else if (snapshot.hasError) {
+                return Center(child: Text(snapshot.error.toString()));
+              }
+              return const Center(child: CircularProgressIndicator());
+            }
+          ),
+        ],
       ),
       // body: ReorderableListView(
       //   padding: const EdgeInsets.symmetric(horizontal: 200.0),

@@ -180,18 +180,16 @@ class _RegisterState extends State<Register> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
-                          IconButton(
-                            onPressed: () {},
-                            icon: const Icon(Icons.reddit),
-                            iconSize: 30.0,
-                            tooltip: 'Reddit',
-                          ),
-                          const SizedBox(width: 35.0),
+                          // IconButton(
+                          //   onPressed: () {},
+                          //   icon: const Icon(Icons.reddit),
+                          //   iconSize: 30.0,
+                          //   tooltip: 'Reddit',
+                          // ),
+                          // const SizedBox(width: 35.0),
                           IconButton(
                             onPressed: () async {
-                              print("Ta mere");
                               var res = await _launchURL("discord", "register");
-                              print(res);
                             },
                             icon: const Icon(Icons.discord),
                             iconSize: 30.0,
@@ -199,7 +197,9 @@ class _RegisterState extends State<Register> {
                           ),
                           const SizedBox(width: 35.0),
                           IconButton(
-                            onPressed: () {},
+                            onPressed: () async {
+                              var res = await _launchURL("wakatime", "register");
+                            },
                             icon: SvgPicture.asset('icons/wakatime.svg'),
                             iconSize: 30.0,
                             tooltip: 'Wakatime',

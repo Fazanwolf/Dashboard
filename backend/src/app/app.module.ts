@@ -14,6 +14,7 @@ import { ServicesModule } from '../services/services.module';
 import { WidgetsModule } from '../widgets/widgets.module';
 import { MeModule } from '../me/me.module';
 import { AdminModule } from '../admin/admin.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -33,7 +34,8 @@ import { AdminModule } from '../admin/admin.module';
     ServicesModule,
     WidgetsModule,
     MeModule,
-    AdminModule
+    AdminModule,
+    ScheduleModule.forRoot()
   ],
   controllers: [AppController],
   providers: [AppService],

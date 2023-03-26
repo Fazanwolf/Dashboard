@@ -10,6 +10,12 @@ export class Param{
   key: String;
   @Prop({ type: String })
   value: String
+
+  @Prop({ type: Boolean })
+  required: Boolean
+
+  @Prop({ type: String })
+  type: String
 }
 
 @Schema(
@@ -34,6 +40,12 @@ export class Widget
 
   @Prop({ required: true, default: true })
   enabled: boolean;
+
+  @Prop({ required: true, type: String })
+  result: string;
+
+  @Prop({ required: true, type: Number })
+  idx: number;
 
   @Prop({ type: mongoose.Types.Array })
   params: Param[];

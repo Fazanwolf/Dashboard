@@ -65,7 +65,7 @@ export class DiscordService {
     return guilds.length;
   }
 
-  async getAuthorize(redirectURI = this.redirect_uri) {
+  getAuthorize(redirectURI = this.redirect_uri) {
     const params = {
       response_type: "code",
       client_id: discord.client,
@@ -108,7 +108,6 @@ export class DiscordService {
     formData.append('client_secret', discord.secret);
     formData.append('redirect_uri', redirectURI);
     if (dto.state) formData.append('state', dto.state);
-    console.log(dto);
     return (await lastValueFrom(
       this.httpService
         .post(this.discordURL.token, formData)

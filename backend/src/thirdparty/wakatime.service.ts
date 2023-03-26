@@ -4,6 +4,7 @@ import { catchError, lastValueFrom, map } from 'rxjs';
 import { HttpException, Injectable } from '@nestjs/common';
 import { RequestTokenDto } from '../_dto/request-token.dto';
 import axios, { AxiosError } from 'axios';
+import { WakatimeDto } from '../_dto/wakatime.dto';
 
 @Injectable()
 export class WakatimeService {
@@ -37,19 +38,12 @@ export class WakatimeService {
     const bearerHeader = {
       Authorization: `Bearer ${token}`,
     };
-    console.log(bearerHeader)
-
-    try {
-      const res = await lastValueFrom(this.httpService.get(`${this.wakatimeURL.user}`, { headers: bearerHeader }).pipe(
-        map((response) => [response.data, response.status])
-      ));
-      if (res[1] !== 200) {
-        throw new HttpException(res[0], res[1]);
-      }
-      return res[0];
-    } catch (err) {
-      throw new HttpException(err.response.data, err.response.status);
-    }
+    const response = await this.httpService
+      .get(this.wakatimeURL.user, { headers: bearerHeader })
+      .toPromise();
+    if (!response.data)
+      return response;
+    return response.data.data;
     // const { data } = await lastValueFrom(
     //   this.httpService
     //     .get(`${this.wakatimeURL.user}`, { headers: bearerHeader })
@@ -86,11 +80,22 @@ export class WakatimeService {
     formData.append('client_id', wakatime.client);
     formData.append('client_secret', wakatime.secret);
     formData.append('redirect_uri', redirectURI);
-    return (await lastValueFrom(
+    const data = (await lastValueFrom(
       this.httpService
         .post(this.wakatimeURL.token, formData)
         .pipe(map((response) => response.data)),
     )) as any;
+
+    let datas = data.split('&');
+    let myFormat = {}
+
+    for (let i = 0; i < datas.length; i++) {
+      const tmp = datas[i].split('=');
+      if (tmp[0] == "expires_at" || tmp[0] == "scope" ) myFormat[tmp[0]] = decodeURIComponent(tmp[1]);
+      else myFormat[tmp[0]] = tmp[1];
+    }
+    console.log(myFormat);
+    return (myFormat as WakatimeDto);
   }
 
   async oAuth2Register(dto: RequestTokenDto)/*: Promise<User>*/ {

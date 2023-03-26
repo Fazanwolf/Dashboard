@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:frontend/services/services_request.dart';
 import 'package:frontend/widgets/logged_app_bar.dart';
-import 'package:frontend/widgets/service_container.dart';
+import 'package:frontend/services/service_container.dart';
 import 'package:localstorage/localstorage.dart';
 
 class Services extends StatefulWidget {
@@ -82,9 +82,9 @@ class _ServicesState extends State<Services> {
               return ListView.builder(
                   itemCount: snapshot.data!.length,
                   itemBuilder: (BuildContext context, int index) {
-                    if (storage.getItem("adultContent") == false && snapshot.data![index].icon == "papi") {
-                      return Container();
-                    }
+                    // if (storage.getItem("adultContent") == false && snapshot.data![index].icon == "papi") {
+                    //   return Container();
+                    // }
                     return ServiceContainer(
                         title: snapshot.data![index].name,
                         description: snapshot.data![index].description,

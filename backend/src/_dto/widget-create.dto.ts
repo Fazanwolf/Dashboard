@@ -46,12 +46,30 @@ export class WidgetCreateDto {
 
   @ApiProperty({
     required: true,
+    description: 'Resultat of the widget',
+    type: String,
+    example: "no_data"
+  })
+  result: string;
+
+  @ApiProperty({
+    required: true,
+    description: 'Index of the widget',
+    type: Number,
+    example: -1
+  })
+  idx: number;
+
+  @ApiProperty({
+    required: true,
     description: 'Params of the widget  {key: ..., value: ...}',
     type: [Param],
     example: [
       {
-      key: "Age",
-      value: "18",
+        key: "Age",
+        value: "18",
+        required: false,
+        type: 'number'
       },
     ]
   })
