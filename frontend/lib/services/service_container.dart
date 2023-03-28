@@ -1,8 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/services/services_request.dart';
-import 'package:frontend/widgets/custom_description.dart';
 import 'package:frontend/widgets/custom_title.dart';
 import 'package:frontend/services/form_services_dialog.dart';
 import 'package:localstorage/localstorage.dart';
@@ -49,13 +47,18 @@ class _ServiceContainerState extends State<ServiceContainer> {
     });
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+    tokenRefreshed = tokenRefreshed;
+  }
+
   Map<String, Widget> iconMapping = {
     'discord': const Icon(Icons.discord, size: 45),
     'reddit': const Icon(Icons.reddit, size: 45),
     'wakatime': SvgPicture.asset("icons/wakatime.svg", height: 45, width: 45, color: Colors.white),
     'papi': SvgPicture.asset("icons/underage.svg", height: 45, width: 45, color: Colors.white),
   };
-
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +101,6 @@ class _ServiceContainerState extends State<ServiceContainer> {
                       splashColor: Colors.transparent,
                       onPressed: () async {
                         String res = await checkTokensRequest(widget.icon);
-                        print(res + " " + widget.icon);
                         if (res == "Nothing to refresh") {
                           setState(() {
                             tokenRefreshed = true;

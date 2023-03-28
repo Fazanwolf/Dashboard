@@ -90,7 +90,6 @@ class _FormServiceDialogState extends State<FormServiceDialog> {
         ],
       );
     }
-    print("Params");
     return AlertDialog(
       title: const Text("Option for the widget"),
       content: Form(
@@ -132,7 +131,7 @@ class _FormServiceDialogState extends State<FormServiceDialog> {
           child: const Text("Cancel"),
         ),
         TextButton(
-          onPressed: () async {
+          onPressed: () {
             if (_dialog.currentState!.validate()) {
               for (Param item in widget.widgetData.params) {
                 if (!item.required && _controller[item.key]!.text.isNotEmpty) {
@@ -141,30 +140,33 @@ class _FormServiceDialogState extends State<FormServiceDialog> {
                   item.value = _controller[item.key]!.text;
                 }
               }
-              try {
-                CreateWidgetResult res = await createWidgetRequest(
-                    widget.widgetData.name, widget.widgetData.description, widget
-                    .widgetData
-                    .icon, widget.widgetData.enabled, widget.widgetData.params);
-                var snackBar = SnackBar(content: Text(res.message));
-                ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                Navigator.of(context, rootNavigator: true).pop();
-                if (!widget.tokenRefreshed) {
-                  if (widget.widgetData.icon != "papi") {
-                    String checkToken = await checkTokensRequest(widget.widgetData.icon);
-                    if (checkToken == "Nothing to refresh") {
+              createWidgetRequest(
+                  widget.widgetData.name, widget.widgetData.description, widget
+                  .widgetData
+                  .icon, widget.widgetData.enabled, widget.widgetData.params).then((res) {
+                  var snackBar = SnackBar(content: Text(res.message));
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                  Navigator.of(context, rootNavigator: true).pop();
+              }).catchError((e) {
+                var errorDialog = ErrorAlertDialog(type: e.error.toString(), message: "Caused: ${e.message.toString()}");
+                showDialog(context: context, builder: (BuildContext context) => errorDialog);
+              });
+              if (!widget.tokenRefreshed) {
+                if (widget.widgetData.icon != "papi") {
+                  checkTokensRequest(widget.widgetData.icon).then((value) {
+                    if (value == "Nothing to refresh") {
                       var snackyBar = const SnackBar(content: Text("Nothing to refresh"));
                       ScaffoldMessenger.of(context).showSnackBar(snackyBar);
                     } else {
                       var snackyBar = const SnackBar(content: Text("Redirecting to refresh token..."));
                       ScaffoldMessenger.of(context).showSnackBar(snackyBar);
-                      html.window.open(checkToken, "_self");
+                      html.window.open(value, "_self");
                     }
-                  }
+                  }).catchError((e) {
+                    var errorDialog = ErrorAlertDialog(type: e.error.toString(), message: "Caused: ${e.message.toString()}");
+                    showDialog(context: context, builder: (BuildContext context) => errorDialog);
+                  });
                 }
-              } on ServicesError catch (e) {
-                var errorDialog = ErrorAlertDialog(type: e.error, message: "Caused: ${e.message}");
-                showDialog(context: context, builder: (BuildContext context) => errorDialog);
               }
             }
           },

@@ -17,6 +17,8 @@ import { User } from '../_schemas/user.schema';
 import { Token } from '../_schemas/token.schema';
 import { CronJob } from 'cron';
 import { Widget } from '../_schemas/widget.schema';
+import { cache } from '../_tools/Config';
+import { PapiDto } from '../_dto/papi.dto';
 
 @Injectable()
 export class MeService {
@@ -35,11 +37,12 @@ export class MeService {
 
   async getMe(head) {
     const { id } = this.jwtService.decode(head) as { id };
-    const { email, username, adultContent } = await this.usersService.getOne(id);
+    const { email, username, rateLimit, adultContent } = await this.usersService.getOne(id);
 
     const user = {
       email,
       username,
+      rateLimit,
       adultContent,
     }
 
@@ -140,6 +143,17 @@ export class MeService {
     return (await this.getMyWidgets(head)).length;
   }
 
+  async savePositions(widgets) {
+    try {
+      for (const widget of widgets) {
+        await this.widgetsService.update(widget.id, { idx: widget.idx });
+      }
+      return { message: 'Positions successfully updated' };
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   async getMyServices(head) {
     const { id } = this.jwtService.decode(head) as { id };
     const user = await this.usersService.getOne(id);
@@ -183,46 +197,91 @@ export class MeService {
 
 
   async manageEveryWidgets(user: User, tokens: Token, widgets: Widget[]) {
-    console.log("manageEveryWidgets");
+    console.log("manageEveryWidgets of " + user.username + " (" + user._id + ")");
 
-    for (const widget of widgets) {
-      if (widget.icon == "reddit") {
-        const data = await this.redditService.getLastPost(tokens.reddit, user.username);
-        await this.widgetsService.update(widget._id, { result: data.toString() });
+    try {
+      for (const widget of widgets) {
+        if (widget.icon == "reddit") {
+          console.log("Reddit:");
+          this.redditService.getLastPost(tokens.reddit, user.username).then((res) => {
+            console.log(JSON.stringify(res));
+            this.widgetsService.update(widget._id, { result: JSON.stringify(res) }).catch((e) => {
+              console.log(e);
+            });
+          });
+        }
+        if (widget.icon == "discord") {
+          let numberOfGuilds: string;
+          if (widget.params[0].value) numberOfGuilds = widget.params[0].value.toString();
+          this.discordService.getGuildsSimplify(tokens.discord, numberOfGuilds).then((res) => {
+            this.widgetsService.update(widget._id, { result: JSON.stringify(res) }).catch((e) => {
+              console.log(e);
+            });
+          });
+        }
+        if (widget.icon == "wakatime") {
+          console.log("Wakatime:");
+          this.wakatimeService.getCodeTimeUntilTodayBeautify(tokens.wakatime).then((res) => {
+            this.widgetsService.update(widget._id, { result: JSON.stringify(res) }).catch((e) => {
+              console.log(e);
+            });
+          });
+        }
+        if (widget.icon == "papi") {
+          const numberOfActress = widget.params[0].value.toString();
+          if (numberOfActress && numberOfActress != "Number") {
+            this.papiService.getPornstar({i: parseInt(numberOfActress)}).then((res) => {
+              this.widgetsService.update(widget._id, { result: JSON.stringify(res) }).catch((e) => {
+                console.log(e);
+              });
+            });
+          } else {
+            this.papiService.getPornstar().then((res) => {
+              this.widgetsService.update(widget._id, { result: JSON.stringify(res) }).catch((e) => {
+                console.log(e);
+              });
+            });
+          }
+        }
       }
-      if (widget.icon == "discord") {
-        const data = await this.discordService.getGuilds(tokens.discord);
-        await this.widgetsService.update(widget._id, { result: data.toString() });
-      }
-      if (widget.icon == "wakatime") {
-        const data = await this.wakatimeService.getCodeTimeUntilToday(tokens.wakatime);
-        await this.widgetsService.update(widget._id, { result: data.toString() });
-      }
-      if (widget.icon == "papi") {
-        const data = await this.papiService.getPornstar();
-        await this.widgetsService.update(widget._id, { result: data.toString() });
-      }
+    } catch (e) {
+      console.log(e);
     }
 
   }
 
-  @Interval((1000 * 60 * 5))
+  @Interval(1000 * 60)
   async manageEveryUsers() {
     console.log("managing every users");
 
-    const users = await this.usersService.getAll();
-    for (const user of users) {
-      // if (this.schedulerRegistry.getInterval(user._id) != undefined)
-      //   this.schedulerRegistry.deleteInterval(user._id);
-      const tokens = await this.tokensService.getTokenOf(user._id);
-      const widgets = await this.widgetsService.retreiveAllEnabledOf(user._id);
+    this.usersService.getAll().then((users: User[]) => {
+      for (const user of users) {
+        try {
+          if (this.schedulerRegistry.getInterval(user._id) != undefined) {
+            clearInterval(this.schedulerRegistry.getInterval(user._id));
+            this.schedulerRegistry.deleteInterval(user._id);
+          }
+        } catch (e) {
+          console.log(e);
+        }
+        this.tokensService.getTokenOf(user._id).then((tokens: Token) => {
+          this.widgetsService.retreiveAllEnabledOf(user._id).then((widgets: Widget[]) => {
+            let callback = async () => {
+              await this.manageEveryWidgets(user, tokens, widgets);
+            };
+            const interval = setInterval(callback, user.rateLimit);
+            this.schedulerRegistry.addInterval(user._id, interval);
+          }).catch((e) => {
+            console.log(e);
+          });
+        }).catch((e) => {
+          console.log(e);
+        })
+      }
+    }).catch((e) => {
+      console.log(e);
+    });
 
-      let callback = async () => {
-        await this.manageEveryWidgets(user, tokens, widgets);
-      };
-      const interval = setInterval(callback, user.rateLimit);
-      this.schedulerRegistry.addInterval(user._id, interval);
-    }
   }
 
 

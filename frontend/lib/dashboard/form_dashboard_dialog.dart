@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:frontend/dashboard/dashboard.request.dart';
 import 'package:frontend/services/services_request.dart';
 import 'package:frontend/widgets/error_alert_dialog.dart';
-import 'dart:html' as html;
 
 class FormDashboardDialog extends StatefulWidget {
 

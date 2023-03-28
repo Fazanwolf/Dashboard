@@ -82,6 +82,26 @@ Future<List<WidgetDatas>> getMyWidgets() async {
   }
 }
 
+
+Future<WidgetResult> updateWidgetPositionRequest({required List<WidgetDatas> body})
+async {
+  LocalStorage storage = LocalStorage('user.json');
+
+  final headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer ${storage.getItem("access_token")}",
+  };
+
+  final uri = Uri.http("172.20.0.7:8080", "/me/positions/widgets");
+  final response = await http.patch(uri, headers: headers, body: jsonEncode(body));
+
+  if (response.statusCode == 200) {
+    return WidgetResult.fromJson(jsonDecode(response.body));
+  } else {
+    throw ServicesError.fromJson(jsonDecode(response.body));
+  }
+}
+
 Future<WidgetResult> updateWidgetRequest({required String id, bool? enabled, int? idx, List<Param>? params}) async {
   LocalStorage storage = LocalStorage('user.json');
 

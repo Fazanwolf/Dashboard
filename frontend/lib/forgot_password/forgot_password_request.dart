@@ -2,15 +2,15 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ForgotPasswordResult {
-  final String result;
+  final String message;
 
   ForgotPasswordResult({
-    required this.result,
+    required this.message,
   });
 
   factory ForgotPasswordResult.fromJson(Map<String, dynamic> json) {
     return ForgotPasswordResult(
-      result: json['id'] as String,
+      message: json['message'] as String,
     );
   }
 
@@ -44,8 +44,8 @@ Future<ForgotPasswordResult> forgotPasswordRequest(String email) async {
   final res = await http.post(uri, headers: headers, body: jsonEncode(<String, String>{
     'email': email,
   }),);
-  
-  if (res.statusCode == 200) {
+
+  if (res.statusCode == 201) {
     return ForgotPasswordResult.fromJson(jsonDecode(res.body));
   } else {
     throw ForgotPasswordError.fromJson(jsonDecode(res.body));

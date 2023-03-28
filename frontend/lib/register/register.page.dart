@@ -1,7 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/login/login.page.dart';
 import 'package:frontend/login/login.request.dart';
 import 'package:frontend/register/register.request.dart';
 import 'package:frontend/widgets/error_alert_dialog.dart';
@@ -29,11 +27,11 @@ class _RegisterState extends State<Register> {
   @override
   void initState() {
     super.initState();
+    _isButtonDisabled = false;
   }
 
   Future _launchURL(String platform, String type) async {
     var result = await getUri(platform, type);
-    // print(result);
     // var uri = Uri.parse(result);
 
     // html.window.open(result, 'nani?');
@@ -45,6 +43,8 @@ class _RegisterState extends State<Register> {
     // }
     // return res;
   }
+
+  late bool _isButtonDisabled = false;
 
   final GlobalKey<FormState> _formRegisterKey = GlobalKey<FormState>();
 
@@ -74,7 +74,7 @@ class _RegisterState extends State<Register> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      CustomTitle(title: 'Register'),
+                      const CustomTitle(title: 'Register'),
                       const SizedBox(height: 20.0),
                       CustomDescription(description: 'Please sign in to continue.'),
                       const SizedBox(height: 20.0),
@@ -149,24 +149,30 @@ class _RegisterState extends State<Register> {
                         }
                       ),
                       const SizedBox(height: 10.0),
-                      ConfirmButton(text: 'Register', onPressed: () async {
+                      ConfirmButton(text: 'Register', isButtonDisabled: _isButtonDisabled, onPressed:
+                      _isButtonDisabled ? null : () {
                         if (_formRegisterKey.currentState!.validate()) {
-                          try {
-                            RegisterResult res = await registerRequest(_emailController.text,
-                                _usernameController.text, _passwordController.text);
+                          setState(() {
+                            _isButtonDisabled = true;
+                          });
+                          registerRequest(_emailController.text, _usernameController.text, _passwordController.text).then((value) {
+                            var snackBar = SnackBar(
+                              content: Text(value.message),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                          }).catchError((e) {
+                            setState(() {
+                              _isButtonDisabled = false;
+                            });
+                            var errorDialog = ErrorAlertDialog(type: " ", message: "Caused: ${e.toString()}");
+                            showDialog(context: context, builder: (BuildContext context) => errorDialog);
+                          }).whenComplete(() {
                             _emailController.clear();
                             _usernameController.clear();
                             _passwordController.clear();
                             _confirmPasswordController.clear();
-                            var snackBar = SnackBar(
-                              content: Text(res.message),
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
                             Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-                          } on RegisterError catch (e) {
-                            var errorDialog = ErrorAlertDialog(type: e.error, message: "Caused: ${e.message}");
-                            showDialog(context: context, builder: (BuildContext context) => errorDialog);
-                          }
+                          });
                         }
                       }),
                       const SizedBox(height: 20.0),
@@ -189,7 +195,7 @@ class _RegisterState extends State<Register> {
                           // const SizedBox(width: 35.0),
                           IconButton(
                             onPressed: () async {
-                              var res = await _launchURL("discord", "register");
+                              await _launchURL("discord", "register");
                             },
                             icon: const Icon(Icons.discord),
                             iconSize: 30.0,

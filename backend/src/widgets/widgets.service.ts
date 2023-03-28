@@ -33,9 +33,10 @@ export class WidgetsService {
   }
 
   async getWidgetsOf(id: string) {
-    const widget = await this.widgetModel.find({ user: id }).exec();
-    if (!widget) throw new NotFoundException("That user does not have any widget.");
-    return widget;
+    const widgets = await this.widgetModel.find({ user: id }).sort({ idx: 1 }).exec();
+    if (!widgets) throw new NotFoundException("That user does not have any widget.");
+    // console.log(widgets);
+    return widgets;
   }
 
   async retreiveAllEnabledOf(id: string) {

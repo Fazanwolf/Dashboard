@@ -1,13 +1,10 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/dashboard/dashboard.request.dart';
+import 'package:frontend/dashboard/dashboard_content.dart';
 import 'package:frontend/dashboard/form_dashboard_dialog.dart';
 import 'package:frontend/dashboard/form_delete_dialog.dart';
-import 'package:frontend/services/services_request.dart';
-import 'package:frontend/widgets/custom_description.dart';
 import 'package:frontend/widgets/custom_title.dart';
-import 'package:frontend/services/form_services_dialog.dart';
 import 'package:localstorage/localstorage.dart';
 
 class DashboardContainer extends StatefulWidget {
@@ -43,7 +40,7 @@ class _DashboardContainerState extends State<DashboardContainer> {
       child: Center(
         child: Container(
           padding: const EdgeInsets.all(8.0),
-          height: 175.0,
+          height: 250.0,
           width: 800,
           decoration: BoxDecoration(
             borderRadius: const BorderRadius.all(Radius.circular(10.0)),
@@ -96,7 +93,10 @@ class _DashboardContainerState extends State<DashboardContainer> {
                 color: widget.widget.enabled ? Colors.grey : Colors.white,
                 thickness: 1,
               ),
-              Expanded(child: Text(widget.widget.result, textAlign: TextAlign.left))
+              // Expanded(
+              //   child: SingleChildScrollView(child: Text(widget.widget.result, textAlign: TextAlign.left)),
+              // )
+              DashboardContent(result: widget.widget.result, type: widget.widget.icon)
             ],
           ),
         ),

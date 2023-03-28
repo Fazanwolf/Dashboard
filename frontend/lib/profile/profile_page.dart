@@ -2,16 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/profile/profile.request.dart';
-import 'package:frontend/profile/profile_info_card.dart';
 import 'package:frontend/profile/profile_update_card.dart';
-import 'package:frontend/register/register.page.dart';
-import 'package:frontend/widgets/LoggedDrawer.dart';
-import 'package:frontend/widgets/error_alert_dialog.dart';
-import 'package:frontend/widgets/input/basic_text_input.dart';
-import 'package:frontend/widgets/input/confirm_button.dart';
 import 'package:frontend/widgets/logged_app_bar.dart';
 import 'package:frontend/widgets/custom_title.dart';
-import 'package:frontend/widgets/input/password_input.dart';
 import 'package:localstorage/localstorage.dart';
 
 import '../widgets/input/number_input.dart';
@@ -32,14 +25,9 @@ class _ProfileState extends State<Profile> {
 
   @override
   void initState() {
-    print(storage.getItem('access_token'));
     super.initState();
     result = getProfileRequest();
-    refresh = () {
-      setState(() {
-        result = getProfileRequest();
-      });
-    };
+    refresh = () {};
   }
 
 
@@ -77,9 +65,7 @@ class _ProfileState extends State<Profile> {
                             iconSize: 100.0,
                             padding: const EdgeInsets.all(8.0),
                             onPressed: () {
-                              setState(() {
-                                result = getProfileRequest();
-                              });
+                              refresh();
                             },
                             icon: SvgPicture.asset(
                               // height: 50.0,
@@ -144,6 +130,27 @@ class _ProfileState extends State<Profile> {
                               const SizedBox(width: 10.0),
                               Text(
                                 snapshot.data!.adultContent ? 'Yes    ' : 'No    ',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10.0),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: <Widget>[
+                              const Text(
+                                '    Rate limit (ms):',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16.0,
+                                ),
+                              ),
+                              const SizedBox(width: 10.0),
+                              Text(
+                                "${snapshot.data!.rateLimit.toString()}    ",
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16.0,

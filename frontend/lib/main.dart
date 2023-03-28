@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:frontend/dashboard/dashboard.page.dart';
 import 'package:frontend/forgot_password/forgot_password_page.dart';
@@ -17,12 +15,12 @@ void main() {
   storage.ready.then((value) => value);
   setPathUrlStrategy();
 
+  // final String pathName = html.window.location.pathname;
+
   runApp(
     MaterialApp(
     debugShowCheckedModeBanner: false,
     title: 'Wolfboard',
-    initialRoute: (storage.getItem('stayConnected') == true && storage.getItem('access_token') ? '/dashboard'
-        : '/home'),
     onGenerateRoute: (RouteSettings settings) {
       Widget? pageView;
       if (settings.name != null) {
@@ -30,13 +28,27 @@ void main() {
         //uriData.path will be your path and uriData.queryParameters will hold query-params values
 
         switch (uriData.path) {
+          case '/':
+            if (storage.getItem('access_token') != null) {
+              pageView = const Dashboard();
+            } else {
+              pageView = const Home();
+            }
+            break;
           case '/login':
             if (uriData.queryParameters["access_token"] != null) {
               storage.setItem('access_token', uriData.queryParameters["access_token"]);
               storage.setItem('id', uriData.queryParameters["id"]);
               storage.setItem('username', uriData.queryParameters["username"]);
               storage.setItem('adultContent', uriData.queryParameters["adultContent"] == "true" ? true : false);
+              storage.setItem('rateLimit', int.parse(uriData.queryParameters["rateLimit"].toString()));
               pageView = const Dashboard();
+            }
+            break;
+          case '/reset-password':
+            if (uriData.queryParameters["token"] != null) {
+              storage.setItem('tmp_token', uriData.queryParameters["token"]);
+              pageView = const ResetPassword();
             }
             break;
         }
@@ -46,6 +58,7 @@ void main() {
             builder: (BuildContext context) => pageView!);
       }
     },
+    home: const Home(),
     routes: {
       '/home': (context) => const Home(),
       '/login': (context) => const Login(),

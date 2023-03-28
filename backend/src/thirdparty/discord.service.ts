@@ -32,22 +32,42 @@ export class DiscordService {
     const bearerHeader = {
       Authorization: `Bearer ${token}`,
     };
-    return (await lastValueFrom(
-      this.httpService
-        .get(this.discordURL.guilds, {
-          headers: bearerHeader,
-        })
-        .pipe(map((response) => response.data)),
-    )) as any;
+    try {
+      return (await lastValueFrom(
+        this.httpService
+          .get(this.discordURL.guilds, {
+            headers: bearerHeader,
+          })
+          .pipe(map((response) => response.data)),
+      )) as any;
+    } catch (e) {
+      console.log(e);
+    }
   }
 
-  async getGuildsSimplify(token: string) {
-    const data = await this.getGuilds(token);
-    const guilds = [];
-    data.forEach((guild) => {
-      guilds.push({ name: guild.name, id: guild.id, icon: guild.icon });
-    });
-    return guilds;
+  async getGuildsSimplify(token: string, i?) {
+    try {
+      const data = await this.getGuilds(token);
+      const guilds = [];
+
+      if (i) i = parseInt(i) - 1;
+
+      for (const guild of data) {
+        if (guild.icon) guilds.push({
+          name: guild.name,
+          icon: `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png`,
+        });
+        else guilds.push({
+          name: guild.name,
+          icon: `https://cdn.discordapp.com/icons/1089804302819794946/a78c420626ecb22fc6f8e74be7b6edf6.png`,
+        });
+        if (i == 0) break;
+        if (i > 0) i--;
+      }
+      return guilds;
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   async getGuildByName(token: string, options?: any) {
@@ -79,25 +99,32 @@ export class DiscordService {
     const bearerHeader = {
       Authorization: `Bearer ${token}`,
     };
-    const response = await this.httpService
-      .get(`${this.discordURL.user}`, { headers: bearerHeader })
-      .toPromise();
-    if (!response.data)
-      return response;
-    return response.data;
+    try {
+      const response = await this.httpService
+        .get(`${this.discordURL.user}`, { headers: bearerHeader })
+        .toPromise();
+      if (!response.data)
+        return response;
+      return response.data;
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   async getUserByID(token: string, id: string) {
     const bearerHeader = {
       Authorization: `Bearer ${token}`,
     };
-    console.log(`${this.discordURL.users}/${id}`);
-    const response = await this.httpService
-      .get(`${this.discordURL.users}/${id}`, { headers: bearerHeader })
-      .toPromise();
-    if (!response.data)
-      return response;
-    return response.data;
+    try {
+      const response = await this.httpService
+        .get(`${this.discordURL.users}/${id}`, { headers: bearerHeader })
+        .toPromise();
+      if (!response.data)
+        return response;
+      return response.data;
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   async getToken(dto: RequestTokenDto, redirectURI = this.redirect_uri) {
@@ -108,11 +135,15 @@ export class DiscordService {
     formData.append('client_secret', discord.secret);
     formData.append('redirect_uri', redirectURI);
     if (dto.state) formData.append('state', dto.state);
-    return (await lastValueFrom(
-      this.httpService
-        .post(this.discordURL.token, formData)
-        .pipe(map((response) => response.data)),
-    )) as any;
+    try {
+      return (await lastValueFrom(
+        this.httpService
+          .post(this.discordURL.token, formData)
+          .pipe(map((response) => response.data)),
+      )) as any;
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   async discordOauth2Register(dto: RequestTokenDto)/*: Promise<User>*/ {

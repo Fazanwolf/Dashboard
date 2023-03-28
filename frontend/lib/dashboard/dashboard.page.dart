@@ -1,14 +1,10 @@
 import 'dart:async';
-import 'dart:html';
-
 import 'package:flutter/material.dart';
 import 'package:frontend/dashboard/dashboard.request.dart';
 import 'package:frontend/dashboard/dashboard_container.dart';
-import 'package:frontend/services/services_request.dart';
 import 'package:frontend/widgets/logged_app_bar.dart';
 import 'package:localstorage/localstorage.dart';
 import 'package:reorderables/reorderables.dart';
-import 'package:frontend/dashboard/widget_container.dart';
 
 class Dashboard extends StatefulWidget {
 
@@ -23,6 +19,8 @@ class _DashboardState extends State<Dashboard> {
   final LocalStorage storage = LocalStorage('user.json');
 
   late Future<List<WidgetDatas>> future;
+
+  late List<WidgetDatas> cpy;
 
   // final StreamController<List<WidgetData>> _widgetsStreamCtrl = StreamController<List<WidgetData>>.broadcast();
   // Stream<List<WidgetData>> get onCurrentUserChanged => _widgetsStreamCtrl.stream;
@@ -78,10 +76,23 @@ class _DashboardState extends State<Dashboard> {
     // future = getMyWidgets();
   }
 
+  late Timer timer;
+
   @override
   void initState() {
     super.initState();
     future = getMyWidgets();
+    var reload = Duration(milliseconds: storage.getItem('rateLimit'));
+    timer = Timer.periodic(reload, (Timer t) => setState(() {
+      future = getMyWidgets();
+    }));
+    cpy = <WidgetDatas>[];
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    timer.cancel();
   }
 
   @override
@@ -114,60 +125,66 @@ class _DashboardState extends State<Dashboard> {
       //     ),
       //   ]
       // ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          const SizedBox(height: 20.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: () async {
-                  // await updateWidgetRequest(id: id)
-                },
-                child: const Text("Save order")
-              ),
-              const SizedBox(width: 20.0),
-              ElevatedButton(
-                onPressed: () async {
-                  // await updateWidgetRequest(id: id)
-                },
-                child: const Text("Refresh")
-              ),
-            ],
-          ),
-          const SizedBox(height: 20.0),
-          FutureBuilder(
-            future: future,
-            builder: (BuildContext context, AsyncSnapshot<List<WidgetDatas>> snapshot) {
-              if (snapshot.hasData) {
-                return ReorderableWrap(
-                  onReorder: (oldIdx, newIdx) {
-                    setState(() {
-                      var tmp = snapshot.data!.removeAt(oldIdx);
-                      snapshot.data!.insert(newIdx, tmp);
-                    });
+      body: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    updateWidgetPositionRequest(body: cpy).then((value) => refresh());
                   },
-                  needsLongPressDraggable: false,
-                  children: [
-                    for (final item in snapshot.data!)
-                      Center(
-                        child: ListTile(
-                          title: DashboardContainer(
-                            widget: item,
-                            future: refresh,
-                          )
-                        ),
-                      )
-                  ],
-                );
-              } else if (snapshot.hasError) {
-                return Center(child: Text(snapshot.error.toString()));
+                  child: const Text("Save order")
+                ),
+                const SizedBox(width: 20.0),
+                ElevatedButton(
+                  onPressed: () {
+                    refresh();
+                  },
+                  child: const Text("Refresh")
+                ),
+              ],
+            ),
+            const SizedBox(height: 20.0),
+            FutureBuilder(
+              future: future,
+              builder: (BuildContext context, AsyncSnapshot<List<WidgetDatas>> snapshot) {
+                if (snapshot.hasData) {
+                  return ReorderableWrap(
+                    onReorder: (oldIdx, newIdx) {
+                      setState(() {
+                        var tmp = snapshot.data!.removeAt(oldIdx);
+                        snapshot.data!.insert(newIdx, tmp);
+                        for (var data in snapshot.data!) {
+                          data.idx = snapshot.data!.indexOf(data);
+                        }
+                        cpy = snapshot.data!;
+                      });
+                    },
+                    needsLongPressDraggable: false,
+                    children: [
+                      for (final item in snapshot.data!)
+                        Center(
+                          child: ListTile(
+                            title: DashboardContainer(
+                              widget: item,
+                              future: refresh,
+                            )
+                          ),
+                        )
+                    ],
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(child: Text(snapshot.error.toString()));
+                }
+                return const Center(child: CircularProgressIndicator());
               }
-              return const Center(child: CircularProgressIndicator());
-            }
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
       // body: ReorderableListView(
       //   padding: const EdgeInsets.symmetric(horizontal: 200.0),

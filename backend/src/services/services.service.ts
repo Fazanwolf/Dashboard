@@ -51,7 +51,6 @@ export class ServicesService {
     }
 
     const servicesRes = servicesOrigin.map( ({ name, description, widgets, ...rest }) => {
-        console.log(name, description, widgets);
         return {
           name: name,
           description: description,

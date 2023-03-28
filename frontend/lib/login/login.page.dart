@@ -7,7 +7,6 @@ import 'package:frontend/widgets/input/confirm_button.dart';
 import 'package:frontend/widgets/custom_title.dart';
 import 'package:frontend/widgets/input/password_input.dart';
 import 'package:localstorage/localstorage.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'dart:html' as html;
 
 class Login extends StatefulWidget {
@@ -23,6 +22,8 @@ class _LoginState extends State<Login> {
 
   bool _stayConnected = false;
 
+  late bool _isButtonDisabled;
+
   void _onStayConnectedChanged(bool? trigger) => setState(() {
     if (trigger != null) {
       _stayConnected = trigger;
@@ -37,11 +38,11 @@ class _LoginState extends State<Login> {
   @override
   void initState() {
     super.initState();
+    _isButtonDisabled = false;
   }
 
   Future _launchURL(String platform, String type) async {
     var result = await getUri(platform, type);
-    // print(result);
     // var uri = Uri.parse(result);
 
     // Navigator.of(context).pop();
@@ -160,20 +161,29 @@ class _LoginState extends State<Login> {
                         ],
                       ),
                       const SizedBox(height: 10.0),
-                      ConfirmButton(text: 'Login', onPressed: () async {
+                      ConfirmButton(text: 'Login', isButtonDisabled: _isButtonDisabled, onPressed: _isButtonDisabled
+                          ? null :
+                        () async {
                         if (_formLoginKey.currentState!.validate()) {
-                          try {
-                            LoginResult futureLogin = await loginRequest(_emailController.text, _passwordController.text);
-                            storage.setItem('access_token', futureLogin.access_token);
-                            storage.setItem('id', futureLogin.id);
-                            storage.setItem('username', futureLogin.username);
-                            storage.setItem('adultContent', futureLogin.adultContent);
+                          setState(() {
+                            _isButtonDisabled = true;
+                          });
+                          loginRequest(_emailController.text, _passwordController.text).then((value) {
+                            storage.setItem('access_token', value.access_token);
+                            storage.setItem('id', value.id);
+                            storage.setItem('username', value.username);
+                            storage.setItem('rateLimit', value.rateLimit);
+                            storage.setItem('adultContent', value.adultContent);
                             storage.setItem('stayConnected', _stayConnected);
                             Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
-                          } on LoginError catch (e) {
-                            var errorDialog = ErrorAlertDialog(type: e.error, message: "Caused: ${e.message}");
+                          }).catchError((e) {
+                            setState(() {
+                              _isButtonDisabled = false;
+                            });
+                            var errorDialog = ErrorAlertDialog(type: e.error.toString(), message: "Caused: ${e.message
+                                .toString()}");
                             showDialog(context: context, builder: (BuildContext context) => errorDialog);
-                          }
+                          });
                         }
                       }),
                       const SizedBox(height: 20.0),

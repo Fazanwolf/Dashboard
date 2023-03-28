@@ -22,20 +22,58 @@ export class PapiService {
         buildURL += '&' + item;
       });
     }
-    console.log(buildURL);
     return buildURL;
   }
 
-  async getPornstar(dto?: PapiDto) {
+  async getPornstar(opt?: {dto?: PapiDto, i?: number}) {
+    const header: AxiosHeaders = AxiosHeaders.concat({ 'x-rapidapi-key': papi.secret, 'x-rapidapi-host': papi.host });
+
+    let builedURL = this.buildURL(opt.dto);
+
+    try {
+      const data =  (await lastValueFrom(
+        this.httpService
+          .get(builedURL, { headers: header })
+          .pipe(map((response) => response.data)),
+      )) as any;
+      // console.log(data);
+      let newData = [];
+      for (let act of data.results) {
+        newData.push({
+          name: act.name,
+          age: act.age ?? 0,
+          nationality: act.nationality  ?? "null",
+          ethnicity: act.ethnicity ?? "null",
+          cup_size: act.cup_size ?? "null",
+          tats: act.tats ?? "null",
+          rank: act.rank ?? 0,
+          link: act.pornpics_link ?? "null",
+        })
+        if (opt.i == 0) break;
+        if (opt.i > 0) opt.i--;
+      }
+      console.log(newData);
+      return newData;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async getXPornstar(dto?: PapiDto, i?) {
     const header: AxiosHeaders = AxiosHeaders.concat({ 'x-rapidapi-key': papi.secret, 'x-rapidapi-host': papi.host });
 
     let builedURL = this.buildURL(dto);
 
-    return (await lastValueFrom(
-      this.httpService
-        .get(builedURL, { headers: header })
-        .pipe(map((response) =>  response.data)),
-    )) as any;
+    if (i) i = parseInt(i);
+    try {
+      const data = (await lastValueFrom(
+        this.httpService
+          .get(builedURL, { headers: header })
+          .pipe(map((response) => response.data)),
+      )) as any;
+    } catch (e) {
+      console.log(e);
+    }
   }
 
 

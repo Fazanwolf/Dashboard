@@ -1,9 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/profile/profile.request.dart';
 import 'package:frontend/widgets/custom_title.dart';
 import 'package:frontend/widgets/input/basic_text_input.dart';
-import 'package:frontend/widgets/input/confirm_button.dart';
 import 'package:frontend/widgets/input/number_input.dart';
 import 'package:frontend/widgets/input/password_input.dart';
 import 'package:localstorage/localstorage.dart';
@@ -98,8 +96,8 @@ class _ProfileUpdateCardState extends State<ProfileUpdateCard> {
                   controller: _rateLimitController,
                   validator: (value) {
                     if (value != null && value.isNotEmpty) {
-                      if ((value as int) < 1001) {
-                        return "That must be greater than 1 second.";
+                      if ((value as int) < 7999) {
+                        return "That must be greater than 8 second.";
                       }
                     }
                     return null;
@@ -123,21 +121,30 @@ class _ProfileUpdateCardState extends State<ProfileUpdateCard> {
               ),
               ElevatedButton(
                 child: const Text('Update'),
-                onPressed: () async {
+                onPressed: () {
                   if (_formProfileKey.currentState!.validate()) {
-                    await updateProfileRequest(username: _usernameController.text, password: _passwordController
-                        .text, adultContent: adultContent);
+                    updateProfileRequest(username: _usernameController.text, password: _passwordController
+                        .text, adultContent: adultContent).then((value) {
+                          print(value.message);
 
-                    storage.setItem('username', _usernameController.text);
-                    storage.setItem('adultContent', adultContent);
+                          if (_usernameController.text.isNotEmpty) storage.setItem('username', _usernameController.text);
+                          storage.setItem('adultContent', adultContent);
+                          if (_rateLimitController.text.isNotEmpty) {
+                            storage.setItem('rateLimit', int.parse(_rateLimitController.text));
+                          }
+                      var snackBar = SnackBar(content: Text(value.message));
+                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                      widget.refresh();
+                    }).catchError((e) {
+                      var snackBar = SnackBar(content: Text("${e.error.toString()}: ${e.message
+                          .toString()}"));
+                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                    }).whenComplete(() {
+                      _rateLimitController.clear();
+                      _passwordController.clear();
+                      _usernameController.clear();
+                    });
 
-                    _rateLimitController.clear();
-                    _passwordController.clear();
-                    _usernameController.clear();
-
-                    var snackBar = const SnackBar(content: Text("Profile updated successfully!"));
-                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                    widget.refresh();
                   }
                 }
               ),

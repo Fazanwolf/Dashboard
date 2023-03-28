@@ -34,15 +34,19 @@ export class RedditService {
       state: "test", // test
       redirect_uri: encodeURI(redirectURI),
     }
-    let buildURL = this.redditURL.authorize;
-    buildURL += "?response_type=" + params.response_type;
-    buildURL += "&client_id=" + params.client_id;
-    buildURL += "&scope=" + params.scope;
-    buildURL += "&redirect_uri=" + params.redirect_uri;
-    if (params.duration) buildURL += "&duration=" + params.duration;
-    if (params.state) buildURL += "&state=" + params.state;
+    try {
+      let buildURL = this.redditURL.authorize;
+      buildURL += '?response_type=' + params.response_type;
+      buildURL += '&client_id=' + params.client_id;
+      buildURL += '&scope=' + params.scope;
+      buildURL += '&redirect_uri=' + params.redirect_uri;
+      if (params.duration) buildURL += '&duration=' + params.duration;
+      if (params.state) buildURL += '&state=' + params.state;
 
-    return buildURL;
+      return buildURL;
+    } catch (e) {
+      console.log(e);
+    }
     // const response = await this.httpService.get(`${this.redditURL.authorize}`, { params: params }).toPromise();
     // return (response.data);
   }
@@ -52,13 +56,17 @@ export class RedditService {
       Authorization: `Bearer ${token}`,
       "User-Agent": "Dashboard API by u/Fazanwolf"
     };
-    const res = await lastValueFrom(this.httpService.get(this.redditURL.user, { headers: bearerHeader }).pipe(
-      map((response) => [response.data, response.status])
-    ));
-    if (res[1] !== 200) {
-      throw new HttpException(res[0], res[1]);
+    try {
+      const res = await lastValueFrom(this.httpService.get(this.redditURL.user, { headers: bearerHeader }).pipe(
+        map((response) => [response.data, response.status]),
+      ));
+      if (res[1] !== 200) {
+        throw new HttpException(res[0], res[1]);
+      }
+      return res[0];
+    } catch (e) {
+      console.log(e);
     }
-    return res[0];
   }
 
   async getUserPref(token: string) {
@@ -66,13 +74,17 @@ export class RedditService {
       Authorization: `Bearer ${token}`,
       "User-Agent": "Dashboard API by u/Fazanwolf"
     };
-    const res = await lastValueFrom(this.httpService.get(this.redditURL.userPref, { headers: bearerHeader }).pipe(
-      map((response) => [response.data, response.status])
-    ));
-    if (res[1] !== 200) {
-      throw new HttpException(res[0], res[1]);
+    try {
+      const res = await lastValueFrom(this.httpService.get(this.redditURL.userPref, { headers: bearerHeader }).pipe(
+        map((response) => [response.data, response.status]),
+      ));
+      if (res[1] !== 200) {
+        throw new HttpException(res[0], res[1]);
+      }
+      return res[0];
+    } catch (e) {
+      console.log(e);
     }
-    return res[0];
   }
 
   async getLastPost(token: string, name: string) {
@@ -80,13 +92,20 @@ export class RedditService {
       Authorization: `Bearer ${token}`,
       "User-Agent": "Dashboard API by u/Fazanwolf"
     };
-    const res = await lastValueFrom(this.httpService.get(`${this.redditURL.lastPost}/${name}/submitted`, { headers: bearerHeader, params: { limit: 1} }).pipe(
-      map((response) => [response.data, response.status])
-    ));
-    if (res[1] !== 200) {
-      throw new HttpException(res[0], res[1]);
+    try {
+      const res = await lastValueFrom(this.httpService.get(`${this.redditURL.lastPost}/${name}/submitted`, {
+        headers: bearerHeader,
+        params: { limit: 1 },
+      }).pipe(
+        map((response) => [response.data, response.status]),
+      ));
+      if (res[1] !== 200) {
+        throw new HttpException(res[0], res[1]);
+      }
+      return res[0];
+    } catch (e) {
+      console.log(e);
     }
-    return res[0];
   }
 
   async getToken(dto: RequestTokenDto, redirectURI: string = this.redirectURI) {
@@ -102,11 +121,15 @@ export class RedditService {
       Authorization: `Basic ${auth}`
     }
 
-    return (await lastValueFrom(
-      this.httpService
-        .post(this.redditURL.token, formData, { headers: header })
-        .pipe(map((response) =>  response.data)),
-    )) as any;
+    try {
+      return (await lastValueFrom(
+        this.httpService
+          .post(this.redditURL.token, formData, { headers: header })
+          .pipe(map((response) => response.data)),
+      )) as any;
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   async register(dto: RequestTokenDto)/*: Promise<User>*/ {

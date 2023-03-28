@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/forgot_password/forgot_password_request.dart';
+import 'package:frontend/reset_password/reset_password.request.dart';
+import 'package:frontend/widgets/error_alert_dialog.dart';
+import 'package:frontend/widgets/input/confirm_button.dart';
+import 'package:frontend/widgets/input/password_input.dart';
+import 'package:localstorage/localstorage.dart';
 
 class ResetPassword extends StatefulWidget {
   const ResetPassword({super.key});
@@ -9,14 +15,18 @@ class ResetPassword extends StatefulWidget {
 
 class _ResetPasswordState extends State<ResetPassword> {
 
-  bool _passwordVisible = false;
-  bool _checkPasswordVisible = false;
-  String password = "";
-  String checkPassword = "";
+  late bool _isButtonDisabled;
+  LocalStorage storage = new LocalStorage('user.json');
+
+  final GlobalKey<FormState> _formResetPasswordKey = GlobalKey<FormState>();
+
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _checkPasswordController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _isButtonDisabled = false;
   }
 
   @override
@@ -33,84 +43,94 @@ class _ResetPasswordState extends State<ResetPassword> {
               child: Container(
                 width: 450.0,
                 padding: const EdgeInsets.all(15.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    const Text(
-                      'Reset Password',
-                      style: TextStyle(
-                        fontSize: 32.0,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 20.0),
-                    const Text(
-                      'Please enter and verify your new password.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18.0,
-                      ),
-                    ),
-                    const SizedBox(height: 20.0),
-                    TextFormField(
-                      keyboardType: TextInputType.text,
-                      obscureText: !_passwordVisible,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: 'Password',
-                        hintText: 'Enter your password',
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _passwordVisible ? Icons.visibility : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _passwordVisible = !_passwordVisible;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10.0),
-                    TextFormField(
-                      keyboardType: TextInputType.text,
-                      obscureText: !_checkPasswordVisible,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        labelText: 'Confirm password',
-                        hintText: 'Enter your password again',
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _checkPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _checkPasswordVisible = !_checkPasswordVisible;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10.0),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ButtonStyle(
-                        padding: const MaterialStatePropertyAll(EdgeInsets.symmetric(vertical: 14.0, horizontal: 80.0)),
-                        backgroundColor: const MaterialStatePropertyAll(Colors.blueAccent),
-                        shape: MaterialStatePropertyAll(
-                          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-                        ),
-                      ),
-                      child: const Text(
+                child: Form(
+                  key: _formResetPasswordKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      const Text(
                         'Reset Password',
+                        style: TextStyle(
+                          fontSize: 32.0,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 20.0),
+                      const Text(
+                        'Please enter and verify your new password.',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 18.0,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 20.0),
+                      PasswordInput(
+                        label: "Password",
+                        hintText: "Enter your password",
+                        controller: _passwordController,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          if (value.length < 8) {
+                            return "Password must be at least 8 characters long.";
+                          }
+                        return null;
+                        }
+                      ),
+                      const SizedBox(height: 10.0),
+                      PasswordInput(
+                          label: "Check your Password",
+                          hintText: "Enter your password again",
+                          controller: _checkPasswordController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please confirm your password';
+                            }
+                            if (value.length < 8) {
+                              return "Password must be at least 8 characters long.";
+                            }
+                            if (value != _passwordController.text) {
+                              return "Passwords do not match.";
+                            }
+                            return null;
+                          }
+                      ),
+                      const SizedBox(height: 10.0),
+                      ConfirmButton(text: "Reset password", isButtonDisabled: _isButtonDisabled, onPressed:
+                      _isButtonDisabled ? null : () {
+                        if (_formResetPasswordKey.currentState!.validate()) {
+                          if (storage.getItem("tmp_token") == null) {
+                            var errorDialog = const ErrorAlertDialog(type: "TokenError", message: "Token not found. "
+                                "Unauthorized to reset password.");
+                            showDialog(context: context, builder: (BuildContext context) => errorDialog);
+                            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                            return;
+                          }
+                          setState(() {
+                            _isButtonDisabled = true;
+                          });
+                          resetPasswordRequest(_passwordController.text, storage.getItem("tmp_token")).then((value) {
+                            _passwordController.clear();
+                            _checkPasswordController.clear();
+                          }).catchError((e) {
+                            setState(() {
+                              _isButtonDisabled = false;
+                            });
+                            var errorDialog = ErrorAlertDialog(type: (e as ForgotPasswordError).error, message: "Caused: ${e.message}");
+                            showDialog(context: context, builder: (BuildContext context) => errorDialog);
+                          }).whenComplete(() {
+                            setState(() {
+                              _isButtonDisabled = false;
+                            });
+                            var snackBar = const SnackBar(content: Text("Password changed"));
+                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                          });
+                        }
+                      }),
+                    ],
+                  ),
                 ),
               ),
             ),

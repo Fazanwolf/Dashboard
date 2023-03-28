@@ -59,7 +59,13 @@ async function bootstrap() {
     origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS'
   });
-  await app.listen(port);
+  await app.listen(port).catch((e) => {
+    console.log(e);
+  });
 }
 
-bootstrap();
+try {
+  bootstrap()
+} catch(err) {
+  console.error(err);
+}

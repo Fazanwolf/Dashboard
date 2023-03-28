@@ -87,17 +87,17 @@ export class AuthService {
     const cached: User = await this.cacheManager.get(id);
 
     if (cached) {
-      const { password } = cached;
-      const isValid = await bcrypt.compare(query.password, password);
-      if (!isValid) throw new UnauthorizedException('Invalid login.');
+      // const { password } = cached;
+      // const isValid = await bcrypt.compare(query.password, password);
+      // if (!isValid) throw new UnauthorizedException('Invalid login.');
       return await this.userService.update(id, { password: query.password });
     }
 
     const user = await this.userService.getOne(id);
     if (!user) throw new NotFoundException('User not found');
-    const { password } = user;
-    const isValid = await bcrypt.compare(query.password, password);
-    if (!isValid) throw new UnauthorizedException('Invalid login.');
+    // const { password } = user;
+    // const isValid = await bcrypt.compare(query.password, password);
+    // if (!isValid) throw new UnauthorizedException('Invalid login.');
     return await this.userService.update(id, { password: query.password });
   }
 
@@ -122,6 +122,7 @@ export class AuthService {
       id: user._id,
       username: user.username,
       access_token: this.jwtService.sign(payload),
+      rateLimit: user.rateLimit,
       adultContent: user.adultContent,
       expiresIn: 172800,
     };
@@ -197,6 +198,7 @@ export class AuthService {
       id: user._id,
       username: user.username,
       access_token: this.jwtService.sign(payload),
+      rateLimit: user.rateLimit,
       adultContent: user.adultContent,
       expiresIn: 172800,
     };

@@ -1,5 +1,5 @@
 import {
-  Controller,
+  Controller, OnModuleDestroy, OnModuleInit,
   Post,
 } from '@nestjs/common';
 import {
@@ -26,12 +26,11 @@ import { User } from '../_schemas/user.schema';
 @ApiNotFoundResponse({ description: 'Data not found' })
 @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
 @ApiInternalServerErrorResponse({ description: 'Internal server error' })
-export class AdminController {
+export class AdminController implements OnModuleInit {
   constructor(
     private readonly usersService: UsersService,
     private readonly servicesService: ServicesService,
   ) {}
-
 
   exampleUser: User = {
     _id: "example",
@@ -103,12 +102,6 @@ export class AdminController {
         value: "Number",
         required: true,
         type: 'number'
-      },
-      {
-        key: "Ethnicity",
-        value: "String",
-        required: false,
-        type: 'string'
       }
     ]
   }
@@ -177,9 +170,9 @@ export class AdminController {
   @ApiCreatedResponse({ description: 'Admin "Fazanwolf" created' })
   async createMyAdminAccount() {
     const dto: UserCreateDto = {
-      email: "fazanwolf@gmail.com",
+      email: "admin@gmail.com",
       password: "fw974admin",
-      username: "fazanwolf",
+      username: "The Super Admin",
     }
     const user = await this.usersService.create(dto);
     let updateDto: UserUpdateDto = {
@@ -188,6 +181,12 @@ export class AdminController {
       role: RoleEnum.ADMIN
     }
     return await this.usersService.update(user._id, updateDto);
+  }
+
+  async onModuleInit() {
+    const user = await this.usersService.getOneByEmail("admin@gmail.com");
+    if (!user) await this.createMyAdminAccount();
+    await this.recreateServices();
   }
 
 }

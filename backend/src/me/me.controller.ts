@@ -14,6 +14,7 @@ import { MeService } from './me.service';
 import { MeProfileUpdateDto } from '../_dto/me-profile-update.dto';
 import { MeWidgetUpdateDto } from '../_dto/me-widget-update.dto';
 import { WidgetCreateDto } from '../_dto/widget-create.dto';
+import { Widget } from '../_schemas/widget.schema';
 
 @Controller('me')
 @ApiTags('me')
@@ -37,7 +38,9 @@ export class MeController {
   @ApiOperation({ summary: 'Update my profile' })
   @ApiOkResponse({ description: 'My profile successfully updated' })
   async updateMe(@Headers() head, @Body() body: MeProfileUpdateDto) {
-    return await this.meService.updateMe(head['authorization'].split(' ')[1], body);
+    const tmp = await this.meService.updateMe(head['authorization'].split(' ')[1], body);
+    console.log(tmp);
+    return tmp;
   }
 
   @Delete()
@@ -86,7 +89,6 @@ export class MeController {
   @ApiOkResponse({ description: 'My widgets successfully found' })
   async getMyWidgets(@Headers() head) {
     const widgets = await this.meService.getMyWidgets(head['authorization'].split(' ')[1]);
-    console.log(widgets);
     return widgets;
   }
 
@@ -97,6 +99,16 @@ export class MeController {
   @ApiOkResponse({ description: 'Retrieve successfully the number of widget' })
   async getNumberOfWidgets(@Headers() head) {
     return await this.meService.getNumberOfWidgets(head['authorization'].split(' ')[1]);
+  }
+
+  @Patch('positions/widgets')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get the number of widgets' })
+  @ApiOkResponse({ description: 'Retrieve successfully the number of widget' })
+  async updatePosition(@Body() body) {
+    console.log(body);
+    return await this.meService.savePositions(body);
   }
 
   @Post('widgets')

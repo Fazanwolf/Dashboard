@@ -36,31 +36,34 @@ import { Response } from 'express';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Get('verifyAccount/:token')
+  @Get('verifyAccount')
   @ApiOperation({ summary: 'Validate the users' })
   @ApiOkResponse({ description: 'User has been validated' })
   @ApiNotFoundResponse({ description: 'User not found' })
-  async validate(@Param('token') token: string, @Res() res) {
-    await this.authService.confirmMail(token);
-    return res.redirect('http://localhost:8081/login');
+  @ApiQuery({ name: 'token', required: true })
+  @ApiQuery({ name: 'redirect_uri', required: false })
+  async validate(@Query() query: {token: string, redirect_uri?: string}, @Res() res) {
+    await this.authService.confirmMail(query.token);
+    return res.redirect('http://localhost:8081/login' || query.redirect_uri);
   }
 
-  @Get('resetPassword')
+  @Post('resetPassword')
   @ApiOperation({ summary: 'Reset the password of the users' })
   @ApiOkResponse({ description: 'Password changed' })
   @ApiNotFoundResponse({ description: 'User not found' })
-  @ApiQuery({ name: 'token', required: true, type: String })
-  @ApiQuery({ name: 'password', required: true, type: String })
-  resetPassword(@Query() query: AuthResetPasswordDto) {
-    return this.authService.resetPassword(query);
+  async resetPassword(@Body() body: AuthResetPasswordDto) {
+    const result = await this.authService.resetPassword(body);
+    if (result) return { message: 'Password changed', }
+    return { message: 'Something goes wrong', }
   }
 
   @Post('forgotPassword')
   @ApiOperation({ summary: 'Launch the process to reset password' })
   @ApiOkResponse({ description: 'Mail sent' })
-  async forgotPassword(@Body() forgotPasswordDto: AuthForgotPasswordDto, @Res() res) {
-    await this.authService.forgotPassword(forgotPasswordDto);
-    return res.redirect('http://localhost:8081/login');
+  async forgotPassword(@Body() forgotPasswordDto: AuthForgotPasswordDto) {
+    const res = await this.authService.forgotPassword(forgotPasswordDto);
+    if (res) return { message: 'Mail sent', }
+    return { message: 'Something goes wrong', }
   }
 
   @Post('register')
@@ -134,7 +137,7 @@ export class AuthController {
   @ApiQuery({ name: 'platform', required: false, type: String })
   @HttpCode(200)
   async oauth2Login(@Body() dto: Auth2Dto, @Query() query) {
-    return await this.authService.loginWith(dto);
+    await this.authService.loginWith(dto);
   }
 
   @Get('o2/login')
@@ -146,9 +149,13 @@ export class AuthController {
   @ApiQuery({ name: 'platform', required: false, type: String })
   @HttpCode(200)
   async oauth2LoginFromQuery(@Query() query, @Res() res: Response) {
-    const data = await this.authService.loginWith(query);
+    try {
+      const data = await this.authService.loginWith(query);
+      res.redirect(`http://localhost:8081/login?access_token=${data.access_token}&id=${data.id}&username=${data.username}&adultContent=${data.adultContent}&rateLimit=${data.rateLimit}`);
+    } catch (error) {
+      res.redirect(`http://localhost:8081/login`);
+    }
     // res.header('Authorization', `Bearer ${data.access_token}`);
-    res.redirect(`http://localhost:8081/login?access_token=${data.access_token}&id=${data.id}&username=${data.username}&adultContent=${data.adultContent}`);
   }
 
 }

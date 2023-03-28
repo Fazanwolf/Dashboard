@@ -1,7 +1,4 @@
 import 'dart:convert';
-import 'dart:ui';
-
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:localstorage/localstorage.dart';
 
@@ -9,11 +6,13 @@ class GetProfileResult {
   final String email;
   late final String username;
   late final bool adultContent;
+  late final int rateLimit;
 
   GetProfileResult({
     required this.email,
     required this.adultContent,
     required this.username,
+    required this.rateLimit,
   });
 
   factory GetProfileResult.fromJson(Map<String, dynamic> json) {
@@ -21,6 +20,7 @@ class GetProfileResult {
       email: json['email'] as String,
       username: json['username'] as String,
       adultContent: json['adultContent'] as bool,
+      rateLimit: json['rateLimit'] as int,
     );
   }
 
@@ -28,11 +28,11 @@ class GetProfileResult {
 
 class ProfileError implements Exception {
   final String message;
-  final String error;
+  late String error;
 
   ProfileError({
     required this.message,
-    required this.error,
+    this.error = "unknown",
   });
 
   factory ProfileError.fromJson(Map<String, dynamic> json) {
@@ -78,7 +78,7 @@ class UpdateProfileResult {
 
 }
 
-Future<UpdateProfileResult> updateProfileRequest({String? username, String? password, String? rateLimit, bool?
+Future<UpdateProfileResult> updateProfileRequest({String? username, String? password, int? rateLimit, bool?
 adultContent})
 async {
   LocalStorage storage = LocalStorage('user.json');
@@ -96,7 +96,7 @@ async {
   if (password != null && password.isNotEmpty) {
     body["password"] = password;
   }
-  if (rateLimit != null && rateLimit.isNotEmpty) {
+  if (rateLimit != null && rateLimit > 8) {
     body["rateLimit"] = rateLimit;
   }
   if (adultContent != null && adultContent != storage.getItem("adultContent")) {
@@ -104,17 +104,20 @@ async {
   }
 
   if (body.isNotEmpty) {
+    print(body);
     final uri = Uri.http("172.20.0.7:8080", "/me");
     final res = await http.patch(uri, headers: headers, body: json.encode(body));
+    print(res.statusCode);
     if (res.statusCode == 200) {
       return UpdateProfileResult.fromJson(jsonDecode(res.body));
     } else {
       throw ProfileError.fromJson(jsonDecode(res.body));
     }
+  } else {
+    throw ProfileError.fromJson({
+      "message": "No data to update",
+      "error": "Useless request",
+    });
   }
-  throw ProfileError.fromJson({
-    "message": "No data to update",
-    "error": "Useless request",
-  });
 }
 

@@ -30,7 +30,7 @@ export class User
   @Prop({ Type: Types.ObjectId, required: true })
   personalKey: string;
 
-  @Prop({ Type: Number, required: true, default: 1000 * 5 })
+  @Prop({ Type: Number, required: true, default: 1000 * 15 })
   rateLimit: number;
 }
 

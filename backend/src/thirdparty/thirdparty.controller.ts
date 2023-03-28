@@ -36,8 +36,22 @@ export class ThirdPartyController {
   @ApiQuery({ name: 'name', required: false, type: String })
   @ApiQuery({ name: 'max_rank', required: false, type: String })
   @ApiQuery({ name: 'min_rank', required: false, type: String })
+  @ApiQuery({ name: 'pageSize', required: false, type: String })
+  @ApiQuery({ name: 'hair', required: false, type: String })
+  @ApiQuery({ name: 'tattoos', required: false, type: String })
+  @ApiQuery({ name: 'min_age', required: false, type: String })
+  @ApiQuery({ name: 'max_age', required: false, type: String })
+  @ApiQuery({ name: 'min_cup_size', required: false, type: String })
+  @ApiQuery({ name: 'max_cup_size', required: false, type: String })
+  @ApiQuery({ name: 'min_waist', required: false, type: String })
+  @ApiQuery({ name: 'max_waist', required: false, type: String })
+  @ApiQuery({ name: 'min_weight', required: false, type: String })
+  @ApiQuery({ name: 'max_weight', required: false, type: String })
+  @ApiQuery({ name: 'min_rank', required: false, type: String })
+  @ApiQuery({ name: 'max_rank', required: false, type: String })
+
   async papiPornstars(@Query() query: PapiDto) {
-    const data = await this.papiService.getPornstar(query);
+    const data = await this.papiService.getPornstar({ dto: query });
     return (data);
   }
 
@@ -235,7 +249,6 @@ export class ThirdPartyController {
   @Get('discord/guilds/:token')
   async discordListGuild(@Param('token') token: string) {
     const guilds = await this.discordService.getGuilds(token);
-    console.log(guilds.length);
     return guilds;
   }
 

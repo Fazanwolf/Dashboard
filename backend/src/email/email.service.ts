@@ -19,11 +19,11 @@ export class EmailService {
       },
     });
     console.log(info);
-    return { sent: true };
+    return { message: "Mail sent" };
   }
 
   async sendValidationMail(emailDto: EmailDto) {
-    const url: string = "http://localhost:8080/auth/verifyAccount?token=" + emailDto.token + "&redirect_uri=http://localhost:8081/login"
+    const url: string = "http://localhost:8080/auth/verifyAccount?token=" + emailDto.token;
     const info = await this.mailerService.sendMail({
       to: emailDto.email,
       from: '"[NO-REPLY] DASHBOARD" ' + mailjet.email,
@@ -33,7 +33,6 @@ export class EmailService {
         url,
       },
     });
-    console.log(info);
     return { sent: true };
   }
 }

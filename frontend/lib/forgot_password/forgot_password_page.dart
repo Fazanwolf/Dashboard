@@ -15,12 +15,14 @@ class ForgotPassword extends StatefulWidget {
 
 class _ForgotPasswordState extends State<ForgotPassword> {
 
+  late bool _isButtonDisabled;
   final TextEditingController _emailController = TextEditingController();
   final GlobalKey<FormState> _formForgotPasswordKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
+    _isButtonDisabled = false;
   }
 
   @override
@@ -42,7 +44,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      CustomTitle(title: "Forgot Password"),
+                      const CustomTitle(title: "Forgot Password"),
                       const SizedBox(height: 20.0),
                       CustomDescription(description: "Please enter your email address to reset your password."),
                       const SizedBox(height: 20.0),
@@ -60,15 +62,29 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                         }
                       ),
                       const SizedBox(height: 20.0),
-                      ConfirmButton(text: 'Send email', onPressed: () async {
+                      ConfirmButton(text: 'Send email', isButtonDisabled: _isButtonDisabled, onPressed:
+                      _isButtonDisabled ? null : () {
                         if (_formForgotPasswordKey.currentState!.validate()) {
-                          try {
-                            ForgotPasswordResult res = await forgotPasswordRequest(_emailController.text);
-                            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-                          } on ForgotPasswordError catch (e) {
-                            var errorDialog = ErrorAlertDialog(type: e.error, message: "Caused: ${e.message}");
+                          setState(() {
+                            _isButtonDisabled = true;
+                          });
+                          forgotPasswordRequest(_emailController.text).then((value) {
+                            _emailController.clear();
+                            var snackBar = SnackBar(content: Text(value.message));
+                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                          }).catchError((e) {
+                            setState(() {
+                              _isButtonDisabled = false;
+                            });
+                            var errorDialog = ErrorAlertDialog(type: " ", message: "Caus"
+                                "ed: ${e.toString()}");
                             showDialog(context: context, builder: (BuildContext context) => errorDialog);
-                          }
+                          }).whenComplete(() {
+                            setState(() {
+                              _isButtonDisabled = false;
+                            });
+                            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                          });
                         }
                       }),
                       const SizedBox(height: 20.0),

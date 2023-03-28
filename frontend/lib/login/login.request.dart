@@ -6,12 +6,14 @@ class LoginResult {
   final String username;
   final bool adultContent;
   final String access_token;
+  final int rateLimit;
   final int expiresIn;
 
   LoginResult({
     required this.id,
     required this.access_token,
     required this.adultContent,
+    required this.rateLimit,
     required this.username,
     required this.expiresIn,
   });
@@ -21,6 +23,7 @@ class LoginResult {
       id: json['id'] as String,
       username: json['username'] as String,
       adultContent: json['adultContent'] as bool,
+      rateLimit: json['rateLimit'] as int,
       access_token: json['access_token'] as String,
       expiresIn: json['expiresIn'] as int,
     );
@@ -54,9 +57,9 @@ Future<LoginResult> loginRequest(String email, String password) async {
   final headers = {
     "Content-Type": "application/json",
     // "Accept-Encoding": "gzip"
-    // "Access-Control-Allow-Origin": "*",
-    // "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE",
-    // "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE",
+    "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Authorization",
   };
 
   final uri = Uri.http("172.20.0.7:8080", "/auth/login");

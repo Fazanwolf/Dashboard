@@ -1,10 +1,6 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/services/services_request.dart';
 import 'package:frontend/widgets/input/basic_text_input.dart';
-import 'package:frontend/widgets/custom_description.dart';
-import 'package:frontend/widgets/custom_title.dart';
 
 class WidgetContainer extends StatefulWidget {
 

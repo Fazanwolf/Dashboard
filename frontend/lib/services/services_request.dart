@@ -38,7 +38,7 @@ class WidgetData {
   final String icon;
   final bool enabled;
   final String result;
-  final int idx;
+  late int idx;
   final List<Param> params;
 
   WidgetData({
